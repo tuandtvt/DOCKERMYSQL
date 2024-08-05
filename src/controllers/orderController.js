@@ -1,47 +1,54 @@
 import orderService from "../services/orderService";
+import cartService from "../services/cartService"; 
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 
-const buyProduct = async (req, res, next) => {
-  const { product_id, quantity, discount, shipping_cost, tax, gift, delivery_date, payment_method, address_ship } = req.body;
-  const user_id = req.user.id; 
+const placeOrder = async (req, res, next) => {
+  const user_id = req.user.id;
+  const { address_ship, payment_method, discount, shipping_cost, tax, gift, delivery_date } = req.body;
 
-  if (!product_id || !quantity || !discount || !shipping_cost || !tax || !gift || !delivery_date || !payment_method || !address_ship) {
-    return next(new CustomError(ERROR_CODES.INVALID_REQUEST));
+  if (!address_ship || !payment_method || discount === undefined || shipping_cost === undefined || tax === undefined || !gift || !delivery_date) {
+    return res.status(400).json({ message: 'Address, payment method, discount, shipping cost, tax, gift, and delivery date are required' });
   }
 
   try {
-    const result = await orderService.buyProduct(user_id, product_id, quantity, discount, shipping_cost, tax, gift, delivery_date, payment_method, address_ship);
-    res.status(201).json(result);
+    const cartItems = await cartService.getCart(user_id);
+
+    if (cartItems.length === 0) {
+      return res.status(400).json({ message: 'Cart is empty' });
+    }
+
+    const orders = await orderService.createOrder(user_id, cartItems, address_ship, payment_method, discount, shipping_cost, tax, gift, delivery_date);
+
+    await cartService.clearCart(user_id);
+
+    res.status(201).json(orders);
   } catch (error) {
-    if (error.message === 'Product not found') {
-      return next(new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND));
-    }
-    if (error.message === 'Insufficient stock') {
-      return next(new CustomError(ERROR_CODES.INSUFFICIENT_STOCK));
-    }
-    console.error(error);
+    console.error("Error placing order:", error);
     next(new CustomError(ERROR_CODES.SERVER_ERROR));
   }
 };
 
-const updateOrder = async (req, res) => {
+const updateOrderStatus = async (req, res, next) => {
+  const { orderId } = req.params;
+  const { order_status } = req.body;
+
+  const validStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'canceled', 'returned'];
+
+  if (!validStatuses.includes(order_status)) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+
   try {
-    const { order_id, quantity, discount, shipping_cost, tax } = req.body;
-
-    if (!order_id || quantity === undefined || discount === undefined || shipping_cost === undefined || tax === undefined) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const result = await orderService.updateOrderTotal(order_id, quantity, discount, shipping_cost, tax);
-    return res.status(200).json(result);
+    const result = await orderService.updateOrderStatus(orderId, order_status);
+    res.status(200).json(result);
   } catch (error) {
-    console.error("Error in updateOrder:", error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    console.error("Error updating order status:", error);
+    next(new CustomError(ERROR_CODES.SERVER_ERROR));
   }
 };
 
 export default {
-  buyProduct,
-  updateOrder
+  placeOrder,
+  updateOrderStatus
 };

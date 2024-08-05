@@ -51,31 +51,36 @@ module.exports = (sequelize, DataTypes) => {
     },
     discount: {
       type: DataTypes.FLOAT,
-      allowNull: true,
+      allowNull: false,
     },
     shipping_cost: {
       type: DataTypes.FLOAT,
-      allowNull: true,
+      allowNull: false,
     },
     tax: {
       type: DataTypes.FLOAT,
-      allowNull: true,
+      allowNull: false,
     },
     gift: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
     delivery_date: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: false,
+    },
+    order_status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'pending' 
     },
     payment_method: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
     address_ship: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
   }, {
     tableName: 'Orders',

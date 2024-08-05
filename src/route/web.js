@@ -1,4 +1,3 @@
-require("dotenv").config();
 import express from 'express';
 import authController from '../controllers/authController';
 import orderController from '../controllers/orderController';
@@ -9,26 +8,29 @@ import checkRole from '../middleware/checkRole';
 import roleController from '../controllers/roleController';
 import permisionController from '../controllers/permisionController';
 import checkPermision from '../middleware/checkPermision';
+import cartController from '../controllers/cartController';
 
 const router = express.Router();
 
 const initWebRoutes = (app) => {
   router.post('/api/register', authController.register);
-  router.post('/api/login',  authController.login);
+  router.post('/api/login', authController.login);
 
   router.post('/api/add', authenticateToken, checkRole('admin'), checkPermision('update'), productController.addProduct);
 
-  router.post('/api/buy', authenticateToken, checkRole('admin'), orderController.buyProduct);
- 
+  router.post('/api/buy', authenticateToken, orderController.placeOrder);
+
+  router.post('/api/cart/add', authenticateToken, cartController.addToCart);
+
+  router.delete('/api/cart/remove/:product_id', authenticateToken, cartController.removeFromCart);
+
+  router.get('/api/cart', authenticateToken, cartController.getCart);
+
+  router.put('/api/order/:orderId/status', authenticateToken, checkRole('admin'), orderController.updateOrderStatus);
+
   router.get('/api/user/products', authenticateToken, productController.getUserProducts);
 
   router.put('/api/product/update-price', authenticateToken, checkRole('manage'), productController.updateProductPrice);
-
-  router.put('/api/update-order', authenticateToken, orderController.updateOrder);
-
-  router.get('/admin/dashboard', authenticateToken, checkRole('admin'), (req, res) => {
-    res.json({ message: 'Welcome to admin dashboard' });
-  });
 
   router.post('/api/add-role', roleController.addRole);
 
@@ -40,7 +42,7 @@ const initWebRoutes = (app) => {
 
   app.use('/', router);
 
-  app.use(errorHandler)
+  app.use(errorHandler);
 };
 
 export default initWebRoutes;
