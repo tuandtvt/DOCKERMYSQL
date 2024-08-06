@@ -17,27 +17,40 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    product_id: {
+    total: {
+      type: DataTypes.DECIMAL(10, 3),
+      allowNull: false
+    },
+    order_status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'pending'
+    },
+    payment_method: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    address_ship: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    tax: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false
+    },
+    delivery_date: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    cart_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'Products',
+        model: 'Cart',
         key: 'id'
       },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-    price: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false
-    },
-    total: {
-      type: DataTypes.DECIMAL(10, 3),
-      allowNull: false
     },
     createdAt: {
       allowNull: false,
@@ -48,48 +61,15 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
-    },
-    discount: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
-    shipping_cost: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
-    tax: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
-    gift: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    delivery_date: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    order_status: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: 'pending' 
-    },
-    payment_method: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    address_ship: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
+    }
   }, {
     tableName: 'Orders',
     timestamps: true
   });
 
   Order.associate = function(models) {
-    Order.belongsTo(models.User, { foreignKey: 'user_id', as: 'User' });
-    Order.belongsTo(models.Product, { foreignKey: 'product_id', as: 'Product' });
+    Order.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
+    Order.belongsTo(models.Cart, { foreignKey: 'cart_id', as: 'cart' });
   };
 
   return Order;

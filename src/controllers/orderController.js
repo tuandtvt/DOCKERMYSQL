@@ -4,25 +4,15 @@ import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 
 const placeOrder = async (req, res, next) => {
-  const user_id = req.user.id;
-  const { address_ship, payment_method, discount, shipping_cost, tax, gift, delivery_date } = req.body;
+  const { user_id, cart_id, address_ship, payment_method, tax, delivery_date } = req.body;
 
-  if (!address_ship || !payment_method || discount === undefined || shipping_cost === undefined || tax === undefined || !gift || !delivery_date) {
-    return res.status(400).json({ message: 'Address, payment method, discount, shipping cost, tax, gift, and delivery date are required' });
+  if (!user_id || !cart_id || !address_ship || !payment_method || tax === undefined || !delivery_date) {
+    return res.status(400).json({ message: 'User ID, Cart ID, address, payment method, tax, and delivery date are required' });
   }
 
   try {
-    const cartItems = await cartService.getCart(user_id);
-
-    if (cartItems.length === 0) {
-      return res.status(400).json({ message: 'Cart is empty' });
-    }
-
-    const orders = await orderService.createOrder(user_id, cartItems, address_ship, payment_method, discount, shipping_cost, tax, gift, delivery_date);
-
-    await cartService.clearCart(user_id);
-
-    res.status(201).json(orders);
+    const order = await orderService.createOrder(user_id, cart_id, address_ship, payment_method, tax, delivery_date);
+    res.status(201).json(order);
   } catch (error) {
     console.error("Error placing order:", error);
     next(new CustomError(ERROR_CODES.SERVER_ERROR));

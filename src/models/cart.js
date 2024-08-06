@@ -17,20 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    product_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Product',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,
@@ -48,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Cart.associate = function(models) {
     Cart.belongsTo(models.User, { foreignKey: 'user_id', as: 'User' });
-    Cart.belongsTo(models.Product, { foreignKey: 'product_id', as: 'Product' });
+    Cart.hasMany(models.CartItem, { foreignKey: 'cart_id', as: 'CartItems' });
   };
 
   return Cart;

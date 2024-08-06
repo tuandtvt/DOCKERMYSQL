@@ -10,9 +10,15 @@ import permisionController from '../controllers/permisionController';
 import checkPermision from '../middleware/checkPermision';
 import cartController from '../controllers/cartController';
 
+
 const router = express.Router();
 
 const initWebRoutes = (app) => {
+
+  router.get('/', (req, res) => {
+    res.send('Welcome to the API');
+  });
+  
   router.post('/api/register', authController.register);
   router.post('/api/login', authController.login);
 
@@ -26,7 +32,7 @@ const initWebRoutes = (app) => {
 
   router.get('/api/cart', authenticateToken, cartController.getCart);
 
-  router.put('/api/order/:orderId/status', authenticateToken, checkRole('admin'), orderController.updateOrderStatus);
+  router.put('/api/order/:orderId/status', authenticateToken, orderController.updateOrderStatus);
 
   router.get('/api/user/products', authenticateToken, productController.getUserProducts);
 

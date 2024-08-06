@@ -1,111 +1,57 @@
 import db from "../models";
 
-const createOrder = async (user_id, cartItems, address_ship, payment_method, discount, shipping_cost, tax, gift, delivery_date) => {
+const createOrder = async (user_id, cart_id, address_ship, payment_method, tax, delivery_date) => {
   const transaction = await db.sequelize.transaction();
 
   try {
-   
-    const total = cartItems.reduce((acc, item) => {
-      const total_item_price = item.quantity * parseFloat(item.product.price);
-      const discounted_price = total_item_price * (1 - discount / 100);
-      const taxed_price = discounted_price * (1 + tax / 100);
-      return acc + taxed_price;
-    }, 0) + shipping_cost;
+    const cart = await db.Cart.findOne({
+      where: { id: cart_id, user_id },
+      include: [{ model: db.CartItem, as: 'CartItems', include: ['Product'] }]
+    });
 
-   
-    for (const item of cartItems) {
-      const product = await db.Product.findOne({ where: { id: item.product.id } });
-
-      if (!product) {
-        throw new Error(`Product with id ${item.product.id} not found.`);
-      }
-
-      if (product.stock < item.quantity) {
-        throw new Error(`Not enough stock for product ${product.name}. Only ${product.stock} left.`);
-      }
+    if (!cart) {
+      throw new Error('Cart not found');
     }
 
-   
-    const orderData = cartItems.map(item => ({
+    const total = cart.CartItems.reduce((acc, item) => {
+      const total_item_price = item.quantity * parseFloat(item.Product.price);
+      const taxed_price = total_item_price * (1 + tax / 100);
+      return acc + taxed_price;
+    }, 0);
+
+    const order = await db.Order.create({
       user_id,
-      product_id: item.product.id, 
-      quantity: item.quantity,
-      price: item.product.price,
       total,
       address_ship,
       payment_method,
-      discount,
-      shipping_cost,
       tax,
-      gift,
       delivery_date,
-      order_status: 'pending'
-    }));
-
-    const orders = await db.Order.bulkCreate(orderData, { transaction });
-
-   
-    for (const item of cartItems) {
-      await db.Product.update(
-        { stock: db.Sequelize.literal(`GREATEST(stock - ${item.quantity}, 0)`) }, 
-        { where: { id: item.product.id }, transaction } 
-      );
-    }
+      cart_id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }, { transaction });
 
     await transaction.commit();
-
-    return orders;
+    return order;
   } catch (error) {
     await transaction.rollback();
-    console.error("Error creating order:", error);
     throw error;
   }
 };
 
+const updateOrderStatus = async (orderId, order_status) => {
+  const order = await db.Order.findByPk(orderId);
 
-
-const getOrderById = async (orderId) => {
-  return await db.Order.findByPk(orderId);
-};
-
-const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    const order = await getOrderById(orderId);
-    if (!order) {
-      throw new Error('Order not found');
-    }
-
-    const validTransitions = {
-      'pending': ['confirmed'],
-      'confirmed': ['shipped'],
-      'shipped': ['delivered'],
-      'delivered': [],
-      'canceled': [],
-      'returned': []
-    };
-
-    const currentStatus = order.order_status;
-    const allowedNextStatuses = validTransitions[currentStatus];
-
-    if (!allowedNextStatuses.includes(newStatus)) {
-      throw new Error('Invalid status transition');
-    }
-
-    const [updated] = await db.Order.update(
-      { order_status: newStatus },
-      { where: { id: orderId } }
-    );
-
-    if (updated) {
-      return { message: 'Order status updated successfully' };
-    } else {
-      throw new Error('Order not found');
-    }
-  } catch (error) {
-    console.error("Error updating order status:", error);
-    throw error;
+  if (!order) {
+    throw new Error('Order not found');
   }
+
+  order.order_status = order_status;
+  await order.save();
+
+  return order;
 };
+
 
 export default {
   createOrder,

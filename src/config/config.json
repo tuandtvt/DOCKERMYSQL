@@ -1,32 +1,28 @@
 {
-    "development": {
-      "username": "root",
-      "password": "tuan@2002",   
-      "database": "testdb",
-      "host": "127.0.0.1",
-      "dialect": "mysql",
-      "port": 3308,              
-      "logging": false,
-      "query": {
-        "raw": true
-      },
-      "timezone": "+07:00"
-    },
-    "test": {
-      "username": "root",
-      "password": "tuan@2002",  
-      "database": "database_test",
-      "host": "127.0.0.1",
-      "dialect": "mysql",
-      "port": 3308               
-    },
-    "production": {
-      "username": "root",
-      "password": "tuan@2002",   
-      "database": "database_production",
-      "host": "127.0.0.1",
-      "dialect": "mysql",
-      "port": 3308               
-    }
+  "development": {
+    "username": "root",
+    "password": "tuan@2002",
+    "database": "testdb",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3308,
+    "logging": false,
+    "timezone": "+07:00"
+  },
+  "test": {
+    "username": "root",
+    "password": "tuan@2002",
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3308
+  },
+  "production": {
+    "username": "root",
+    "password": "tuan@2002",
+    "database": "database_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3308
   }
-  
+}

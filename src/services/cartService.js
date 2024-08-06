@@ -1,13 +1,17 @@
 import db from "../models";
-
 const addToCart = async (user_id, product_id, quantity) => {
   const product = await db.Product.findByPk(product_id);
   if (!product) {
     throw new Error('Product not found');
   }
 
-  const [cartItem, created] = await db.Cart.findOrCreate({
-    where: { user_id, product_id },
+  let cart = await db.Cart.findOne({ where: { user_id } });
+  if (!cart) {
+    cart = await db.Cart.create({ user_id });
+  }
+
+  const [cartItem, created] = await db.CartItem.findOrCreate({
+    where: { cart_id: cart.id, product_id },
     defaults: { quantity }
   });
 
@@ -20,10 +24,15 @@ const addToCart = async (user_id, product_id, quantity) => {
 };
 
 const removeFromCart = async (user_id, product_id) => {
-  const cartItem = await db.Cart.findOne({ where: { user_id, product_id } });
+  const cart = await db.Cart.findOne({ where: { user_id } });
+  if (!cart) {
+    throw new Error('Cart not found');
+  }
+
+  const cartItem = await db.CartItem.findOne({ where: { cart_id: cart.id, product_id } });
 
   if (cartItem) {
-    await db.Cart.destroy({ where: { user_id, product_id } });
+    await db.CartItem.destroy({ where: { cart_id: cart.id, product_id } });
     return { message: 'Product removed from cart' };
   } else {
     throw new Error('Cart item not found');
@@ -31,33 +40,48 @@ const removeFromCart = async (user_id, product_id) => {
 };
 
 const getCart = async (user_id) => {
-    const carts = await db.Cart.findAll({
-      where: { user_id },
-      include: [
-        {
-          model: db.Product,
-          as: 'Product'
-        }
-      ],
-      raw: true,
-      nest: true
-    });
-  
-  
-    return carts.map(cart => {
-      const { Product, ...rest } = cart;
-      return {
-        ...rest,
-        product: Product 
-      };
-    });
+  const cart = await db.Cart.findOne({
+    where: { user_id },
+    include: [
+      {
+        model: db.CartItem,
+        as: 'CartItems',
+        include: [
+          {
+            model: db.Product,
+            as: 'Product'
+          }
+        ]
+      }
+    ]
+  });
+
+  if (!cart) {
+    return [];
+  }
+
+  return {
+    id: cart.id,
+    user_id: cart.user_id,
+    createdAt: cart.createdAt,
+    updatedAt: cart.updatedAt,
+    products: cart.CartItems.map(cartItem => ({
+      id: cartItem.Product.id,
+      name: cartItem.Product.name,
+      price: cartItem.Product.price,
+      quantity: cartItem.quantity
+    }))
   };
-  
-  
+};
 
 const clearCart = async (user_id) => {
-  await db.Cart.destroy({ where: { user_id } });
-  return { message: 'Cart cleared' };
+  const cart = await db.Cart.findOne({ where: { user_id } });
+  if (cart) {
+    await db.CartItem.destroy({ where: { cart_id: cart.id } });
+    return { message: 'Cart cleared' };
+  } else {
+    throw new Error('Cart not found');
+  }
 };
 
 export default {
