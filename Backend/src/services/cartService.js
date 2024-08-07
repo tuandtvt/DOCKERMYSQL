@@ -1,13 +1,21 @@
 import db from "../models";
+
+
+
 const addToCart = async (user_id, product_id, quantity) => {
   const product = await db.Product.findByPk(product_id);
   if (!product) {
     throw new Error('Product not found');
   }
 
-  let cart = await db.Cart.findOne({ where: { user_id } });
+  if (quantity > product.stock) {
+    throw new Error('Quantity exceeds available stock');
+  }
+
+  let cart = await db.Cart.findOne({ where: { user_id, status: 0 } });
+
   if (!cart) {
-    cart = await db.Cart.create({ user_id });
+    cart = await db.Cart.create({ user_id, status: 0 });
   }
 
   const [cartItem, created] = await db.CartItem.findOrCreate({
@@ -16,32 +24,42 @@ const addToCart = async (user_id, product_id, quantity) => {
   });
 
   if (!created) {
-    cartItem.quantity += quantity;
+    const newQuantity = cartItem.quantity + quantity;
+    if (newQuantity > product.stock) {
+      throw new Error('Quantity exceeds available stock');
+    }
+    cartItem.quantity = newQuantity;
+    await cartItem.save();
+  } else {
+    cartItem.quantity = quantity;
     await cartItem.save();
   }
 
   return { message: 'Product added to cart' };
 };
 
-const removeFromCart = async (user_id, product_id) => {
-  const cart = await db.Cart.findOne({ where: { user_id } });
+
+
+const removeFromCart = async (user_id, cartItem_id) => {
+  const cartItem = await db.CartItem.findOne({ where: { id: cartItem_id } });
+  if (!cartItem) {
+    throw new Error('Cart item not found');
+  }
+
+  const cart = await db.Cart.findOne({ where: { id: cartItem.cart_id, user_id } });
   if (!cart) {
     throw new Error('Cart not found');
   }
 
-  const cartItem = await db.CartItem.findOne({ where: { cart_id: cart.id, product_id } });
-
-  if (cartItem) {
-    await db.CartItem.destroy({ where: { cart_id: cart.id, product_id } });
-    return { message: 'Product removed from cart' };
-  } else {
-    throw new Error('Cart item not found');
-  }
+  await db.CartItem.destroy({ where: { id: cartItem_id } });
+  return { message: 'Cart item removed' };
 };
+
+
 
 const getCart = async (user_id) => {
   const cart = await db.Cart.findOne({
-    where: { user_id },
+    where: { user_id, status: 0 }, 
     include: [
       {
         model: db.CartItem,
@@ -74,6 +92,8 @@ const getCart = async (user_id) => {
   };
 };
 
+
+
 const clearCart = async (user_id) => {
   const cart = await db.Cart.findOne({ where: { user_id } });
   if (cart) {
@@ -84,9 +104,43 @@ const clearCart = async (user_id) => {
   }
 };
 
+
+const updateCartItemQuantity = async (user_id, cartItem_id, quantity) => {
+  const cartItem = await db.CartItem.findOne({ where: { id: cartItem_id } });
+  if (!cartItem) {
+    throw new Error('Cart item not found');
+  }
+
+  const cart = await db.Cart.findOne({ where: { id: cartItem.cart_id, user_id } });
+  if (!cart) {
+    throw new Error('Cart not found');
+  }
+
+  const product = await db.Product.findByPk(cartItem.product_id);
+  if (!product) {
+    throw new Error('Product not found');
+  }
+
+  const currentStock = product.stock + cartItem.quantity;
+  if (quantity > currentStock) {
+    throw new Error('Quantity exceeds available stock');
+  }
+
+  product.stock = currentStock - quantity;
+  await product.save();
+
+  cartItem.quantity = quantity;
+  await cartItem.save();
+
+  return { message: 'Cart item quantity updated' };
+};
+
+
+
 export default {
   addToCart,
   removeFromCart,
   getCart,
-  clearCart
+  clearCart,
+  updateCartItemQuantity
 };

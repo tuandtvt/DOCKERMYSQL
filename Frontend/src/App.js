@@ -7,6 +7,11 @@ import {
 } from "react-router-dom";
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
+import Products from './components/Product/Product';
+import Cart from './components/Cart/Cart';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function App() {
   return (
     <Router>
@@ -28,7 +33,13 @@ function App() {
         <Route path="/register">
           <Register/>
         </Route>
-        <Route path="/" exact>
+        <Route path="/product">
+          <Products/>
+        </Route>
+        <Route path="/cart">
+          <Cart/>
+        </Route>
+        <Route path="/home" exact>
           home
         </Route>
         <Route path="*">
@@ -36,6 +47,18 @@ function App() {
         </Route>
       </Switch>
     </div>
+    <ToastContainer
+      position="bottom-center"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      />
+      {/* Same as */}
     </Router>
   );
 }

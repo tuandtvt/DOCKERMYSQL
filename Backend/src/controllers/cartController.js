@@ -1,5 +1,6 @@
 import cartService from "../services/cartService";
 
+
 const addToCart = async (req, res, next) => {
   const { product_id, quantity } = req.body;
   const user_id = req.user.id;
@@ -17,16 +18,17 @@ const addToCart = async (req, res, next) => {
 };
 
 const removeFromCart = async (req, res, next) => {
-  const { product_id } = req.params;
-  const user_id = req.user.id;
+  const { cartItem_id } = req.params;
+  const user_id = req.user.id; 
 
   try {
-    await cartService.removeFromCart(user_id, product_id);
-    res.status(200).json({ message: 'Product removed from cart' });
+    await cartService.removeFromCart(user_id, cartItem_id);
+    res.status(200).json({ message: 'Cart item removed' });
   } catch (error) {
     next(error);
   }
 };
+
 
 const getCart = async (req, res, next) => {
   const user_id = req.user.id;
@@ -39,8 +41,29 @@ const getCart = async (req, res, next) => {
   }
 };
 
+
+
+const updateCartItemQuantity = async (req, res, next) => {
+  const { cartItem_id } = req.params;
+  const { quantity } = req.body;
+  const user_id = req.user.id;
+
+  if (!quantity || quantity <= 0) {
+    return res.status(400).json({ message: 'Valid quantity is required' });
+  }
+
+  try {
+    await cartService.updateCartItemQuantity(user_id, cartItem_id, quantity);
+    res.status(200).json({ message: 'Cart item quantity updated' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 export default {
   addToCart,
   removeFromCart,
-  getCart
+  getCart,
+  updateCartItemQuantity
 };

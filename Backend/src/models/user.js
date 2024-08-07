@@ -50,5 +50,12 @@ module.exports = (sequelize, DataTypes) => {
     });
     User.hasMany(models.Order, { foreignKey: 'user_id' });
   };
+
+  User.associate = function(models) {
+    User.hasMany(models.Review, { foreignKey: 'user_id', as: 'reviews' });
+    // Các liên kết khác
+  };
+
+  
   return User;
 };

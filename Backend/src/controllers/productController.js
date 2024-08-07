@@ -22,6 +22,7 @@ const addProduct = async (req, res, next) => {
   }
 };
 
+
 const getUserProducts = async (req, res, next) => {
   try {
     const userId = req.user.id; 
@@ -40,6 +41,8 @@ const getUserProducts = async (req, res, next) => {
     }
   }
 };
+
+
 
 const updateProductPrice = async (req, res, next) => {
   const { productId, newPrice } = req.body;

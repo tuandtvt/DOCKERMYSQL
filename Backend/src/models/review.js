@@ -1,6 +1,7 @@
+// models/review.js
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  const Cart = sequelize.define('Cart', {
+  const Review = sequelize.define('Review', {
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -9,18 +10,23 @@ module.exports = (sequelize, DataTypes) => {
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'user',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
+      allowNull: false
     },
-    status: {
+    product_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    rating: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0 
+      validate: {
+        min: 1,
+        max: 5
+      }
+    },
+    comment: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     createdAt: {
       allowNull: false,
@@ -33,14 +39,14 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW
     }
   }, {
-    tableName: 'Carts',
+    tableName: 'Reviews',
     timestamps: true
   });
 
-  Cart.associate = function(models) {
-    Cart.belongsTo(models.User, { foreignKey: 'user_id', as: 'User' });
-    Cart.hasMany(models.CartItem, { foreignKey: 'cart_id', as: 'CartItems' });
+  Review.associate = function(models) {
+    Review.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
+    Review.belongsTo(models.Product, { foreignKey: 'product_id', as: 'product' });
   };
 
-  return Cart;
+  return Review;
 };

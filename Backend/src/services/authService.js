@@ -3,9 +3,10 @@ import jwt from 'jsonwebtoken';
 import db from '../models';
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
+import emailService from './emailService';
+
 
 const register = async (username, email, password, address) => {
-  console.log('hihi', username, email, password, address)
   try {
     const existingUser = await db.User.findOne({ where: { email } });
     if (existingUser) {
@@ -20,6 +21,12 @@ const register = async (username, email, password, address) => {
       address
     });
 
+    await emailService.sendEmail(
+      email,
+      'Welcome to Our Service',
+      `Hello ${username},\n\nThank you for registering. We are excited to have you on board!\n\nBest regards,\nTeam`
+    );
+
     return {
       errCode: 0,
       message: 'User registered successfully',
@@ -33,6 +40,7 @@ const register = async (username, email, password, address) => {
     throw new CustomError(ERROR_CODES.SERVER_ERROR);
   }
 };
+
 
 const login = async (email, password) => {
   try {
@@ -64,7 +72,38 @@ const login = async (email, password) => {
   }
 };
 
+const changePassword = async (email, newPassword) => {
+  try {
+    const user = await db.User.findOne({ where: { email } });
+    if (!user) {
+      throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 8);
+    await user.update({ password: hashedPassword });
+
+    await emailService.sendEmail(
+      email,
+      'Password Changed',
+      `Hello ${user.username},\n\nYour password has been successfully changed.\n\nIf you did not make this change, please contact our support immediately.\n\nBest regards,\nTeam`
+    );
+
+    return {
+      errCode: 0,
+      message: 'Password changed successfully',
+    };
+  } catch (error) {
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    console.error('Error changing password:', error);
+    throw new CustomError(ERROR_CODES.SERVER_ERROR);
+  }
+};
+
+
 export default {
   register,
   login,
+  changePassword,
 };

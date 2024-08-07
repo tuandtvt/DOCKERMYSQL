@@ -16,46 +16,50 @@ const addProduct = async (name, description, price, stock = 0) => {
   }
 };
 
+
 const getUserProducts = async (userId) => {
   try {
-    const orders = await db.Order.findAll({
-      where: { user_id: userId },
-      include: [{ model: db.Product, as: 'Product' }],
-      raw: true
+    const carts = await db.Cart.findAll({
+      where: { user_id: userId, status: 1 },
+      include: [{
+        model: db.CartItem,
+        as: 'CartItems',
+        include: [{
+          model: db.Product,
+          as: 'Product',
+          attributes: ['id', 'name', 'description', 'price', 'stock', 'createdAt', 'updatedAt']
+        }]
+      }]
     });
 
-  
-    const formattedOrders = orders.map(order => {
-      const { 
-        'Product.id': productId, 
-        'Product.name': productName, 
-        'Product.description': productDescription, 
-        'Product.price': productPrice, 
-        'Product.stock': productStock, 
-        'Product.createdAt': productCreatedAt, 
-        'Product.updatedAt': productUpdatedAt, 
-        ...orderData 
-      } = order;
-      
-      orderData.Product = {
-        id: productId,
-        name: productName,
-        description: productDescription,
-        price: productPrice,
-        stock: productStock,
-        createdAt: productCreatedAt,
-        updatedAt: productUpdatedAt
-      };
+    const formattedProducts = carts.flatMap(cart => 
+      cart.CartItems.map(cartItem => ({
+        cartId: cart.id,
+        cartItemId: cartItem.id,
+        productId: cartItem.product_id,
+        quantity: cartItem.quantity,
+        cartCreatedAt: cart.createdAt,
+        cartUpdatedAt: cart.updatedAt,
+        product: {
+          id: cartItem.Product.id,
+          name: cartItem.Product.name,
+          description: cartItem.Product.description,
+          price: cartItem.Product.price,
+          stock: cartItem.Product.stock,
+          createdAt: cartItem.Product.createdAt,
+          updatedAt: cartItem.Product.updatedAt
+        }
+      }))
+    );
 
-      return orderData;
-    });
-
-    return formattedOrders;
+    return formattedProducts;
   } catch (error) {
     console.error('Error fetching user products:', error);
     throw error;
   }
 };
+
+
 
 const updateProductPrice = async (productId, newPrice) => {
   try {

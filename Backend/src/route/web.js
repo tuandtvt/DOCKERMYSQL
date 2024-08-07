@@ -9,6 +9,7 @@ import roleController from '../controllers/roleController';
 import permisionController from '../controllers/permisionController';
 import checkPermision from '../middleware/checkPermision';
 import cartController from '../controllers/cartController';
+import reviewController from '../controllers/reviewController';
 
 
 const router = express.Router();
@@ -20,23 +21,34 @@ const initWebRoutes = (app) => {
   });
   
   router.post('/api/register', authController.register);
+
   router.post('/api/login', authController.login);
 
-  router.post('/api/add', authenticateToken, checkRole('admin'), checkPermision('update'), productController.addProduct);
+  router.post('/api/change-password', authenticateToken, authController.changePassword);
+
+
+  // router.post('/api/add', authenticateToken, checkRole('admin'), checkPermision('update'), productController.addProduct);
+  router.post('/api/add', authenticateToken, productController.addProduct);
 
   router.post('/api/buy', authenticateToken, orderController.placeOrder);
 
   router.post('/api/cart/add', authenticateToken, cartController.addToCart);
 
-  router.delete('/api/cart/remove/:product_id', authenticateToken, cartController.removeFromCart);
+  router.delete('/api/cart/remove/:cartItem_id', authenticateToken, cartController.removeFromCart);
+
+  router.put('/api/cart/update/:cartItem_id', authenticateToken, cartController.updateCartItemQuantity);
 
   router.get('/api/cart', authenticateToken, cartController.getCart);
 
-  router.put('/api/order/:orderId/status', authenticateToken, orderController.updateOrderStatus);
+  router.put('/api/order/update-status', authenticateToken, orderController.updateOrderStatus);
 
   router.get('/api/user/products', authenticateToken, productController.getUserProducts);
 
   router.put('/api/product/update-price', authenticateToken, checkRole('manage'), productController.updateProductPrice);
+
+  router.post('/api/product/:product_id/review', authenticateToken, reviewController.addReview);
+
+  router.get('/api/product/:product_id/reviews', reviewController.getProductReviews);
 
   router.post('/api/add-role', roleController.addRole);
 

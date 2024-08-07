@@ -19,24 +19,28 @@ const placeOrder = async (req, res, next) => {
   }
 };
 
+
 const updateOrderStatus = async (req, res, next) => {
-  const { orderId } = req.params;
-  const { order_status } = req.body;
+  const { orderId, status } = req.body;
 
-  const validStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'canceled', 'returned'];
+  if (!orderId || !status) {
+    return res.status(400).json({ message: 'Order ID và trạng thái là bắt buộc' });
+  }
 
-  if (!validStatuses.includes(order_status)) {
-    return res.status(400).json({ message: 'Invalid status' });
+  const validStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'canceled', 'returned'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
   }
 
   try {
-    const result = await orderService.updateOrderStatus(orderId, order_status);
-    res.status(200).json(result);
+    const updatedOrder = await orderService.updateOrderStatus(orderId, status);
+    res.status(200).json(updatedOrder);
   } catch (error) {
-    console.error("Error updating order status:", error);
-    next(new CustomError(ERROR_CODES.SERVER_ERROR));
+    console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error.message);
+    res.status(400).json({ message: error.message });
   }
 };
+
 
 export default {
   placeOrder,
