@@ -2,6 +2,7 @@ import orderService from "../services/orderService";
 import cartService from "../services/cartService"; 
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
+import { or } from "sequelize";
 
 const placeOrder = async (req, res, next) => {
   const { user_id, cart_id, address_ship, payment_method, tax, delivery_date } = req.body;
@@ -18,7 +19,6 @@ const placeOrder = async (req, res, next) => {
     next(new CustomError(ERROR_CODES.SERVER_ERROR));
   }
 };
-
 
 const updateOrderStatus = async (req, res, next) => {
   const { orderId, status } = req.body;
@@ -41,8 +41,25 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+const repurchaseOrder = async (req, res, next) => {
+  const { orderId, user_id, address_ship, payment_method, tax, delivery_date } = req.body;
+  console.log('>>>check', orderId, user_id, address_ship, payment_method, tax, delivery_date);
+  if (!orderId || !user_id || !address_ship || !payment_method || tax === undefined || !delivery_date) {
+    return res.status(400).json({ message: 'Order ID, User ID, address, payment method, tax, and delivery date are required' });
+  }
+
+  try {
+    const newOrder = await orderService.repurchaseOrder(orderId, user_id, address_ship, payment_method, tax, delivery_date);
+    res.status(201).json(newOrder);
+  } catch (error) {
+    console.error("Error repurchasing order:", error);
+    next(new CustomError(ERROR_CODES.SERVER_ERROR));
+  }
+};
+
 
 export default {
   placeOrder,
-  updateOrderStatus
+  updateOrderStatus,
+  repurchaseOrder
 };

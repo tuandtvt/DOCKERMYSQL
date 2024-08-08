@@ -30,7 +30,7 @@ const addReview = async (user_id, product_id, rating, comment) => {
       }
   
       const review = await db.Review.create({
-        user_id,
+        user_id, 
         product_id,
         rating,
         comment,
@@ -57,7 +57,7 @@ const getProductReviews = async (product_id) => {
     
     const reviews = await db.Review.findAll({
       where: { product_id },
-      include: [{ model: db.User, attributes: ['id', 'username'] }]
+      include: [{ model: db.User, as: 'user', attributes: ['id', 'username'] }]
     });
     
     

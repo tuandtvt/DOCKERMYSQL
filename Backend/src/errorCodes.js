@@ -43,6 +43,16 @@ const ERROR_CODES = {
     code: 'PRODUCT_NOT_FOUND',
     message: 'Product not found',
     statusCode: 404
+  },
+  ACCOUNT_NOT_VERIFIED: {
+    code: 'ACCOUNT_NOT_VERIFIED',
+    message: 'Account not verified',
+    statusCode: 403
+  },
+  ACCOUNT_ALREADY_VERIFIED: {
+    code: 'ACCOUNT_ALREADY_VERIFIED',
+    message: 'Account already verified',
+    statusCode: 400
   }
 };
 

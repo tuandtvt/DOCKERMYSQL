@@ -22,9 +22,15 @@ const initWebRoutes = (app) => {
   
   router.post('/api/register', authController.register);
 
+  router.get('/api/verify/:token', authController.verifyAccount);
+
   router.post('/api/login', authController.login);
 
   router.post('/api/change-password', authenticateToken, authController.changePassword);
+
+  router.post('/api/forgot-password', authController.forgotPassword);
+
+  router.post('/api/reset-password', authController.resetPassword);
 
 
   // router.post('/api/add', authenticateToken, checkRole('admin'), checkPermision('update'), productController.addProduct);
@@ -39,7 +45,7 @@ const initWebRoutes = (app) => {
   router.put('/api/cart/update/:cartItem_id', authenticateToken, cartController.updateCartItemQuantity);
 
   router.get('/api/cart', authenticateToken, cartController.getCart);
-
+ 
   router.put('/api/order/update-status', authenticateToken, orderController.updateOrderStatus);
 
   router.get('/api/user/products', authenticateToken, productController.getUserProducts);
@@ -49,6 +55,8 @@ const initWebRoutes = (app) => {
   router.post('/api/product/:product_id/review', authenticateToken, reviewController.addReview);
 
   router.get('/api/product/:product_id/reviews', reviewController.getProductReviews);
+
+  router.post('/api/orders/repurchase', authenticateToken, orderController.repurchaseOrder);
 
   router.post('/api/add-role', roleController.addRole);
 

@@ -28,14 +28,19 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW,
       allowNull: false
     },
-    role_id: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'Roles',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL'
+    // role_id: {
+    //   type: DataTypes.INTEGER,
+    //   references: {
+    //     model: 'Roles',
+    //     key: 'id'
+    //   },
+    //   onUpdate: 'CASCADE',
+    //   onDelete: 'SET NULL'
+    // },
+    status: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
     }
   }, {
     tableName: 'user',
@@ -53,7 +58,6 @@ module.exports = (sequelize, DataTypes) => {
 
   User.associate = function(models) {
     User.hasMany(models.Review, { foreignKey: 'user_id', as: 'reviews' });
-    // Các liên kết khác
   };
 
   
