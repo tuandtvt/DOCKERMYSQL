@@ -12,7 +12,7 @@ const Login = () => {
         isValidPassword: true,
     };
     const [objCheckInput, setObjCheckInput] = useState(defaultValidInput);
-    
+
     let history = useHistory();
 
     const handleCreateNewAccount = () => {
@@ -24,17 +24,17 @@ const Login = () => {
 
         if (!email) {
             toast.error('Email is required');
-            setObjCheckInput({...defaultValidInput, isValidEmail: false});
+            setObjCheckInput({ ...defaultValidInput, isValidEmail: false });
             return false;
         }
         let regx = /\S+@\S+\.\S+/;
         if (!regx.test(email)) {
-            setObjCheckInput({...defaultValidInput, isValidEmail: false});
+            setObjCheckInput({ ...defaultValidInput, isValidEmail: false });
             toast.error('Please enter a valid email address');
             return false;
         }
         if (!password) {
-            setObjCheckInput({...defaultValidInput, isValidPassword: false});
+            setObjCheckInput({ ...defaultValidInput, isValidPassword: false });
             toast.error('Password is required');
             return false;
         }
@@ -44,7 +44,7 @@ const Login = () => {
         //     toast.error('Please enter a valid password');
         //     return false;
         // }
-        
+
         return true;
     };
 
@@ -58,7 +58,7 @@ const Login = () => {
                 console.log('Login response:', response);
                 if (response.status === 200) {
                     toast.success('Login successful!');
-                    history.push('/home'); 
+                    history.push('/products');
                 }
             }).catch(error => {
                 console.error('Login error:', error);
@@ -77,16 +77,16 @@ const Login = () => {
                 <div className="row px-3 px-sm-0">
                     <div className="content-left col-12 d-none col-sm-7 d-sm-block">
                         <div className='brand'>
-                            Facebook
+                            Shoppe
                         </div>
                         <div className='detail'>
-                            Facebook helps you connect and share with the people in your life.
+                            Shoppe helps you connect and share with the people in your life.
                         </div>
                     </div>
 
                     <div className="content-right col-sm-5 col-12 d-flex flex-column gap-3 py-3">
                         <div className='brand d-sm-none'>
-                            Facebook
+                            Shoppe
                         </div>
                         <div className='form-group'>
                             <label>Email:</label>
@@ -110,13 +110,22 @@ const Login = () => {
                             />
                         </div>
                         <button className='btn btn-primary' type='button' onClick={handleLogin}>Login</button>
-                       
+
                         <hr />
-                        <div className='text-center'>
+                        {/* <div className='text-center'>
                             <button className='btn btn-success' onClick={handleCreateNewAccount}>
                                 Create new account
                             </button>
+                        </div> */}
+                        <div className="actions">
+                            <button className='btn-forgot-password' onClick={() => history.push('/forgot-password')}>
+                                Forgot password
+                            </button>
+                            <button className='btn-create-account' onClick={handleCreateNewAccount}>
+                                Create new account
+                            </button>
                         </div>
+
                     </div>
                 </div>
             </div>

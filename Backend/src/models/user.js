@@ -41,13 +41,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false
+    },
+    notificationToken: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     tableName: 'user',
     timestamps: false
   });
 
-  User.associate = function(models) {
+  User.associate = function (models) {
     User.belongsToMany(models.Role, {
       through: 'UserRoles',
       foreignKey: 'user_id',
@@ -56,10 +60,10 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.Order, { foreignKey: 'user_id' });
   };
 
-  User.associate = function(models) {
+  User.associate = function (models) {
     User.hasMany(models.Review, { foreignKey: 'user_id', as: 'reviews' });
   };
 
-  
+
   return User;
 };

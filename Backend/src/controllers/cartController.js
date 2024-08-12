@@ -19,7 +19,7 @@ const addToCart = async (req, res, next) => {
 
 const removeFromCart = async (req, res, next) => {
   const { cartItem_id } = req.params;
-  const user_id = req.user.id; 
+  const user_id = req.user.id;
 
   try {
     await cartService.removeFromCart(user_id, cartItem_id);
@@ -31,6 +31,7 @@ const removeFromCart = async (req, res, next) => {
 
 
 const getCart = async (req, res, next) => {
+  console.log('<<c ', req.user)
   const user_id = req.user.id;
 
   try {

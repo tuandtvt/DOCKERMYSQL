@@ -93,10 +93,10 @@ const Register = () => {
                 <div className="row px-3 px-sm-0">
                     <div className="content-left col-12 d-none col-sm-7 d-sm-block">
                         <div className='brand'>
-                            Facebook
+                            Shoppe
                         </div>
                         <div className='detail'>
-                            Facebook helps you connect and share with the people in your life
+                            Shoppe helps you connect and share with the people in your life
                         </div>
                     </div>
                     <div className="content-right col-sm-5 col-12 d-flex flex-column gap-3 py-3">
@@ -148,7 +148,7 @@ const Register = () => {
                             />
                         </div>
                         <button className='btn btn-primary' type='button' onClick={handleRegister}>Register</button>
-                        <hr/>
+                        <hr />
                         <div className='text-center'>
                             <button className='btn btn-success' onClick={handleLogin}>
                                 Already have an account? Login

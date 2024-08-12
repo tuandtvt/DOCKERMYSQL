@@ -25,11 +25,11 @@ const addProduct = async (req, res, next) => {
 
 const getUserProducts = async (req, res, next) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
     if (!userId) {
       return next(new CustomError(ERROR_CODES.INVALID_REQUEST));
     }
-    
+
     const products = await productService.getUserProducts(userId);
     res.status(200).json(products);
   } catch (error) {
@@ -64,8 +64,24 @@ const updateProductPrice = async (req, res, next) => {
   }
 };
 
+const getAllProducts = async (req, res, next) => {
+  try {
+    const products = await productService.getAllProducts();
+    res.status(200).json(products);
+  } catch (error) {
+    if (error instanceof CustomError) {
+      next(error);
+    } else {
+      console.error('Error fetching all products:', error);
+      next(new CustomError(ERROR_CODES.SERVER_ERROR));
+    }
+  }
+};
+
+
 export default {
   addProduct,
   getUserProducts,
-  updateProductPrice
+  updateProductPrice,
+  getAllProducts
 };

@@ -32,7 +32,7 @@ const getUserProducts = async (userId) => {
       }]
     });
 
-    const formattedProducts = carts.flatMap(cart => 
+    const formattedProducts = carts.flatMap(cart =>
       cart.CartItems.map(cartItem => ({
         cartId: cart.id,
         cartItemId: cartItem.id,
@@ -80,8 +80,22 @@ const updateProductPrice = async (productId, newPrice) => {
   }
 };
 
+const getAllProducts = async () => {
+  try {
+    const products = await db.Product.findAll({
+      attributes: ['id', 'name', 'description', 'price', 'stock', 'createdAt', 'updatedAt']
+    });
+
+    return products;
+  } catch (error) {
+    console.error('Error fetching all products:', error);
+    throw error;
+  }
+};
+
 export default {
   addProduct,
   getUserProducts,
-  updateProductPrice
+  updateProductPrice,
+  getAllProducts
 };

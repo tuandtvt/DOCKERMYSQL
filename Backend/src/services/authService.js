@@ -159,7 +159,7 @@ const forgotPassword = async (email) => {
     await emailService.sendEmail(
       email,
       'Lấy lại mật khẩu Password',
-      `Xin chào,\n\nĐể lấy lại mật khẩu, bạn vui lòng nhấn vào link: ${process.env.FRONTEND_URL}/api/reset-password/${token}\n\nTrân trọng,\nTuấn`
+      `Xin chào,\n\nĐể lấy lại mật khẩu, bạn vui lòng nhấn vào link: ${process.env.REACT_URL}/api/v1/reset-password/${token}\n\nTrân trọng,\nTuấn`
     );
 
     return {
@@ -192,13 +192,14 @@ const resetPassword = async (token, newPassword) => {
       message: 'Password reset successfully.',
     };
   } catch (error) {
+    console.error('Error resetting password:', error);
     if (error instanceof CustomError) {
       throw error;
     }
-    console.error('Error resetting password:', error);
     throw new CustomError(ERROR_CODES.SERVER_ERROR);
   }
 };
+
 
 export default {
   register,

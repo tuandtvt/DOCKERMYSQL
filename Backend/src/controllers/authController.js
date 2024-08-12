@@ -1,6 +1,7 @@
 import authService from "../services/authService";
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
+import db from "../models";
 
 const register = async (req, res, next) => {
   try {
@@ -83,12 +84,36 @@ const resetPassword = async (req, res, next) => {
     res.status(result.errCode === 0 ? 200 : 400).json(result);
   } catch (error) {
     if (error instanceof CustomError) {
-      next(error);
+      res.status(error.status || 400).json({ error: error.message });
     } else {
-      next(new CustomError(ERROR_CODES.SERVER_ERROR));
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 };
+
+const updateNotificationToken = async (req, res) => {
+  const { user_id, token } = req.body;
+
+  if (!user_id || !token) {
+    return res.status(400).json({ message: 'User ID và token là bắt buộc' });
+  }
+
+  try {
+    const user = await db.User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ message: 'User không tồn tại' });
+    }
+
+    user.notificationToken = token;
+    await user.save();
+
+    return res.status(200).json({ message: 'Notification token đã được cập nhật thành công' });
+  } catch (error) {
+    console.error('Error updating notification token:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 export default {
   register,
@@ -97,4 +122,5 @@ export default {
   changePassword,
   forgotPassword,
   resetPassword,
+  updateNotificationToken
 };

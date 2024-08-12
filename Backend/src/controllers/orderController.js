@@ -1,8 +1,11 @@
 import orderService from "../services/orderService";
-import cartService from "../services/cartService"; 
+import cartService from "../services/cartService";
+import notificationsService from "../notificationsService";
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 import { or } from "sequelize";
+import db from "../models";
+
 
 const placeOrder = async (req, res, next) => {
   const { user_id, cart_id, address_ship, payment_method, tax, delivery_date } = req.body;
@@ -13,12 +16,32 @@ const placeOrder = async (req, res, next) => {
 
   try {
     const order = await orderService.createOrder(user_id, cart_id, address_ship, payment_method, tax, delivery_date);
+    const user = await db.User.findByPk(user_id);
+    const userToken = user ? user.notificationToken : null;
+
+    if (userToken) {
+      const message = {
+        title: 'Order Placed',
+        body: `Your order #${order.id} has been successfully placed!`,
+      };
+
+      console.log('Sending notification:', message);
+      try {
+        await notificationsService.sendNotification(userToken, message);
+        console.log('Notification sent successfully');
+      } catch (error) {
+        console.error('Error sending notification:', error);
+      }
+    }
+
+
     res.status(201).json(order);
   } catch (error) {
     console.error("Error placing order:", error);
     next(new CustomError(ERROR_CODES.SERVER_ERROR));
   }
 };
+
 
 const updateOrderStatus = async (req, res, next) => {
   const { orderId, status } = req.body;
