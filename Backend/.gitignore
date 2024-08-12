@@ -3,3 +3,7 @@
 /.idea
 .idea/
 .env
+
+firebaseAdmin.js
+
+serviceAccountKey.json
