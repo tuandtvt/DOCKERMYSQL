@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 import './ProductList.scss';
 import cartService from '../../services/cartService';
-import { requestPermission, receiveMessage } from '../../notifications';
+// import { requestPermission, receiveMessage } from '../../notifications';
 
 const ProductList = () => {
     const [products, setProducts] = useState([]);
@@ -19,9 +19,9 @@ const ProductList = () => {
                 console.error('Error fetching products:', error);
             });
 
-        requestPermission();
+        // requestPermission();
 
-        receiveMessage();
+        // receiveMessage();
 
     }, []);
 

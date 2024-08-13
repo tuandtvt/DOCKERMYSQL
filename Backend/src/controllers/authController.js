@@ -92,10 +92,10 @@ const resetPassword = async (req, res, next) => {
 };
 
 const updateNotificationToken = async (req, res) => {
-  const { user_id, token } = req.body;
+  const { user_id, notificationToken } = req.body;
 
-  if (!user_id || !token) {
-    return res.status(400).json({ message: 'User ID và token là bắt buộc' });
+  if (!user_id || !notificationToken) {
+    return res.status(400).json({ message: 'User ID và notification token là bắt buộc' });
   }
 
   try {
@@ -104,15 +104,16 @@ const updateNotificationToken = async (req, res) => {
       return res.status(404).json({ message: 'User không tồn tại' });
     }
 
-    user.notificationToken = token;
+    user.notificationToken = notificationToken;
     await user.save();
 
     return res.status(200).json({ message: 'Notification token đã được cập nhật thành công' });
   } catch (error) {
     console.error('Error updating notification token:', error);
-    return res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật notification token' });
   }
 };
+
 
 
 export default {

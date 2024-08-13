@@ -23,7 +23,7 @@ const initWebRoutes = (app) => {
   // Xác thực và quản lý người dùng (đăng ký, đăng nhập, quên mật khẩu, đổi mật khẩu)
   router.post('/api/register', authController.register);
   router.get('/api/verify/:token', authController.verifyAccount);
-  router.post('/login', authController.login);
+  router.post('/api/login', authController.login);
   router.post('/api/change-password', authenticateToken, authController.changePassword);
   router.post('/api/forgot-password', authController.forgotPassword);
   router.post('/api/reset-password', authController.resetPassword);

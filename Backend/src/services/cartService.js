@@ -14,6 +14,8 @@ const addToCart = async (user_id, product_id, quantity) => {
 
   let cart = await db.Cart.findOne({ where: { user_id, status: 0 } });
 
+  console.log('4444444444444444444444', cart)
+
   if (!cart) {
     cart = await db.Cart.create({ user_id, status: 0 });
   }
@@ -22,7 +24,7 @@ const addToCart = async (user_id, product_id, quantity) => {
     where: { cart_id: cart.id, product_id },
     defaults: { quantity }
   });
-
+  console.log('5555555555555555555555555', cartItem)
   if (!created) {
     const newQuantity = cartItem.quantity + quantity;
     if (newQuantity > product.stock) {
@@ -59,7 +61,7 @@ const removeFromCart = async (user_id, cartItem_id) => {
 
 const getCart = async (user_id) => {
   const cart = await db.Cart.findOne({
-    where: { user_id, status: 0 }, 
+    where: { user_id, status: 0 },
     include: [
       {
         model: db.CartItem,

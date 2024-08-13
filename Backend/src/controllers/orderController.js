@@ -1,10 +1,12 @@
 import orderService from "../services/orderService";
 import cartService from "../services/cartService";
-import notificationsService from "../notificationsService";
+import notificationsService from "../services/notificationsService";
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 import { or } from "sequelize";
 import db from "../models";
+
+
 
 
 const placeOrder = async (req, res, next) => {
@@ -15,16 +17,25 @@ const placeOrder = async (req, res, next) => {
   }
 
   try {
+
     const order = await orderService.createOrder(user_id, cart_id, address_ship, payment_method, tax, delivery_date);
+
+
     const user = await db.User.findByPk(user_id);
     const userToken = user ? user.notificationToken : null;
 
-    if (userToken) {
-      const message = {
-        title: 'Order Placed',
-        body: `Your order #${order.id} has been successfully placed!`,
-      };
 
+    const message = {
+      title: 'Đặt hàng thành công',
+      body:
+        `Đơn hàng ID: ${order.id}\n` +
+        `Địa chỉ giao hàng: ${order.address_ship}\n` +
+        `Phương thức thanh toán: ${order.payment_method}\n` +
+        `Tổng số tiền: ${order.total}`
+    };
+
+
+    if (userToken) {
       console.log('Sending notification:', message);
       try {
         await notificationsService.sendNotification(userToken, message);
@@ -34,13 +45,17 @@ const placeOrder = async (req, res, next) => {
       }
     }
 
-
-    res.status(201).json(order);
+    // Trả về thông tin đơn hàng và thông báo thành công
+    res.status(201).json({
+      order: order,
+      message: 'Order placed successfully'
+    });
   } catch (error) {
     console.error("Error placing order:", error);
     next(new CustomError(ERROR_CODES.SERVER_ERROR));
   }
 };
+
 
 
 const updateOrderStatus = async (req, res, next) => {

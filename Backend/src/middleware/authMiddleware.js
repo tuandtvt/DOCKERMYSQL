@@ -6,6 +6,7 @@ if (!SECRET_KEY) {
   throw new Error('JWT_SECRET is not defined in environment variables');
 }
 
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -14,6 +15,9 @@ const authenticateToken = (req, res, next) => {
     console.log('No token provided');
     return res.status(401).json({ message: 'No token provided' });
   }
+
+  // console.log('Token:', token);
+
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) {
       console.error('Token verification failed:', err);
@@ -23,5 +27,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
 
 module.exports = authenticateToken;
