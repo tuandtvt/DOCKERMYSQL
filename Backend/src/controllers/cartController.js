@@ -2,8 +2,7 @@ import cartService from "../services/cartService";
 
 
 const addToCart = async (req, res, next) => {
-  console.log('1', req.body)
-  console.log('2', req.user.id)
+
   const { product_id, quantity } = req.body;
   const user_id = req.user.id;
 
@@ -13,7 +12,7 @@ const addToCart = async (req, res, next) => {
 
   try {
     await cartService.addToCart(user_id, product_id, quantity);
-    console.log('pass serviceeeeeeeeeeeeeeeeeeeeeeeeeee',)
+
     res.status(200).json({ message: 'Product added to cart' });
   } catch (error) {
     next(error);
@@ -34,7 +33,7 @@ const removeFromCart = async (req, res, next) => {
 
 
 const getCart = async (req, res, next) => {
-  console.log('<<c ', req.user)
+
   const user_id = req.user.id;
 
   try {

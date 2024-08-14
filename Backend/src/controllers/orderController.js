@@ -44,8 +44,6 @@ const placeOrder = async (req, res, next) => {
         console.error('Error sending notification:', error);
       }
     }
-
-    // Trả về thông tin đơn hàng và thông báo thành công
     res.status(201).json({
       order: order,
       message: 'Order placed successfully'

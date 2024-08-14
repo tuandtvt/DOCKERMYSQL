@@ -1,4 +1,3 @@
-// models/review.js
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const Review = sequelize.define('Review', {
@@ -43,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true
   });
 
-  Review.associate = function(models) {
+  Review.associate = function (models) {
     Review.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
     Review.belongsTo(models.Product, { foreignKey: 'product_id', as: 'product' });
   };

@@ -10,6 +10,7 @@ import permisionController from '../controllers/permisionController';
 import checkPermision from '../middleware/checkPermision';
 import cartController from '../controllers/cartController';
 import reviewController from '../controllers/reviewController';
+import shopController from '../controllers/shopController';
 
 const router = express.Router();
 
@@ -54,6 +55,15 @@ const initWebRoutes = (app) => {
   // Quản lý đánh giá sản phẩm (thêm đánh giá, lấy đánh giá sản phẩm)
   router.post('/api/product/:product_id/review', authenticateToken, reviewController.addReview);
   router.get('/api/product/:product_id/reviews', reviewController.getProductReviews);
+
+  // Quản lý shop (thêm shop, cập nhật thông tin shop, lấy thông tin shop, thêm sản phẩm vào shop, cập nhật trạng thái sản phẩm trong shop, lấy sản phẩm theo shop, cập nhật theo dõi/hủy follow shop)
+  router.post('/api/shop/add', shopController.addShop);
+  router.put('/api/shop/:shopId/update', shopController.updateShop);
+  router.get('/api/shop/:shopId', shopController.getShop);
+  router.post('/api/shop/:shopId/product/add', shopController.addProductToShop);
+  router.put('/api/shop/:shopId/product/:productId/update-status', shopController.updateProductStatusInShop);
+  router.get('/api/shop/:shopId/products', shopController.getProductsByShop);
+  router.put('/api/shop/:shopId/follow', authenticateToken, shopController.updateFollowStatus);
 
   // Error handling middleware
   app.use('/', router);

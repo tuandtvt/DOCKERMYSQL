@@ -28,15 +28,6 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW,
       allowNull: false
     },
-    // role_id: {
-    //   type: DataTypes.INTEGER,
-    //   references: {
-    //     model: 'Roles',
-    //     key: 'id'
-    //   },
-    //   onUpdate: 'CASCADE',
-    //   onDelete: 'SET NULL'
-    // },
     status: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -57,13 +48,13 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'user_id',
       as: 'Roles'
     });
+
     User.hasMany(models.Order, { foreignKey: 'user_id' });
-  };
 
-  User.associate = function (models) {
     User.hasMany(models.Review, { foreignKey: 'user_id', as: 'reviews' });
-  };
 
+    User.hasMany(models.ShopUser, { foreignKey: 'user_id', as: 'ShopUsers' });
+  };
 
   return User;
 };

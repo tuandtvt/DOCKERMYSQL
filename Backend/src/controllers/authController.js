@@ -49,7 +49,7 @@ const login = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const { email } = req.user; // Lấy email từ token
+    const { email } = req.user;
     const result = await authService.changePassword(email, currentPassword, newPassword);
     res.status(result.errCode === 0 ? 200 : 400).json(result);
   } catch (error) {

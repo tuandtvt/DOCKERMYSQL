@@ -42,6 +42,20 @@ app.post('/send-noti', (req, res) => {
     }
 });
 
+
+app.post('/subscribe-topic', async (req, res) => {
+    const { token, topic } = req.body;
+
+    try {
+        await admin.messaging().subscribeToTopic(token, topic);
+        res.status(200).json({ message: `Subscribed to topic ${topic}` });
+    } catch (error) {
+        console.error('Error subscribing to topic:', error);
+        res.status(500).json({ error: 'Failed to subscribe to topic' });
+    }
+});
+
+
 app.listen(5000, () => {
     console.log(`Server 1 running on port 5000`);
 });
