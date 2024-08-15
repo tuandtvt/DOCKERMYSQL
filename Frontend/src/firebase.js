@@ -14,30 +14,40 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
 
-export const fetchToken = (setTokenFound) => {
-    return getToken(messaging, {
-        vapidKey:
-            "BIfCh91B51XR7eeHX5MyRGVy7HpQOlA0GWkSYJsWuINuHNckNGGC6H8OD4LjgYOj2sM0yN9WYw9QYUnb80mH47c",
-    })
-        .then((currentToken) => {
-            if (currentToken) {
-                console.log("current token for client: ", currentToken);
-                setTokenFound(true);
-            } else {
-                console.log(
-                    "No registration token available. Request permission to generate one."
-                );
-                setTokenFound(false);
-            }
-        })
-        .catch((err) => {
-            console.log("An error occurred while retrieving token. ", err);
+export const fetchToken = async (setTokenFound) => {
+    try {
+        console.log("Dang yeu cau quyen thong bao");
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            console.log("Khong co quyen thong bao");
+            setTokenFound(false);
+            return;
+        }
+
+        console.log("Da duoc cap quyen thong bao");
+        console.log("Dang yeu cau token");
+        const currentToken = await getToken(messaging, {
+            vapidKey: "BIfCh91B51XR7eeHX5MyRGVy7HpQOlA0GWkSYJsWuINuHNckNGGC6H8OD4LjgYOj2sM0yN9WYw9QYUnb80mH47c",
         });
+
+        if (currentToken) {
+            console.log("Token hien tai cua client: ", currentToken);
+            setTokenFound(true);
+            return currentToken;
+        } else {
+            console.log("Khong co token dang ky nao. Yeu cau quyen de tao token");
+            setTokenFound(false);
+        }
+    } catch (err) {
+        console.error("Da xay ra loi khi lay token. Chi tiet: ", err);
+        setTokenFound(false);
+    }
 };
 
 export const onMessageListener = () =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
         onMessage(messaging, (payload) => {
+            console.log("Thong bao nhan duoc: ", payload);
             resolve(payload);
-        });
+        }, reject);
     });

@@ -11,6 +11,7 @@ import checkPermision from '../middleware/checkPermision';
 import cartController from '../controllers/cartController';
 import reviewController from '../controllers/reviewController';
 import shopController from '../controllers/shopController';
+import notificationsController from '../controllers/notificationsController';
 
 const router = express.Router();
 

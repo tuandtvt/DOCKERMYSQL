@@ -2,7 +2,7 @@ require("dotenv").config();
 import express from 'express';
 import initWebRoutes from './route/web';
 import initApiRoutes from './route/api';
-import bodyParser from 'body-parser'; 
+import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import errorHandler from './middleware/errorHandler';
 import configCors from './config/cors';
@@ -20,7 +20,7 @@ initWebRoutes(app);
 initApiRoutes(app);
 
 app.use((req, res) => {
-    return res.status(404).json({ error: 'NOT_FOUND', message: '404 not found' });
+  return res.status(404).json({ error: 'NOT_FOUND', message: '404 not found' });
 });
 
 app.use(errorHandler);

@@ -29,7 +29,7 @@ const initApiRoutes = (app) => {
 
     router.post('/api/v1/buy', authenticateToken, orderController.placeOrder);
 
-    router.post('/api/v1/update-notification-token', authenticateToken, authController.updateNotificationToken);
+    router.post('/api/v1/update-notification-token', authController.updateNotificationToken);
 
     // app.use('/api/v1', router);
     app.use('/', router);

@@ -22,33 +22,47 @@ function App() {
   const [isTokenFound, setTokenFound] = useState(false);
 
   useEffect(() => {
-    fetchToken(setTokenFound).then((currentToken) => {
+    const getTokenAndSendToServer = async () => {
+      console.log("Dang lay token");
+      const currentToken = await fetchToken(setTokenFound);
       if (currentToken) {
-        const userId = 22;
-        axios.post('http://localhost:8080/api/v1/update-notification-token', {
-          user_id: userId,
-          notificationToken: currentToken,
-        })
-          .then(response => {
-            console.log('Token successfully sent to server:', response.data);
-          })
-          .catch(error => {
-            console.error('Error sending token to server:', error);
+        const userId = 23;
+        try {
+          console.log("Dang gui token len server");
+          const response = await axios.post('http://localhost:8080/api/v1/update-notification-token', {
+            user_id: userId,
+            notificationToken: currentToken,
           });
+          console.log('Gui token len server thanh cong: ', response.data);
+        } catch (error) {
+          console.error('Loi khi gui token len server: ', error);
+        }
+      } else {
+        console.log("Khong lay duoc token.");
       }
-    });
+    };
+
+    getTokenAndSendToServer();
   }, []);
 
   useEffect(() => {
-    onMessageListener().then(payload => {
-      setNotification({ title: payload.notification.title, body: payload.notification.body });
-      setShow(true);
-      console.log(payload);
-    }).catch(err => console.log('failed: ', err));
+    const listenForMessages = async () => {
+      try {
+        console.log("Dang lang nghe thong bao");
+        const payload = await onMessageListener();
+        setNotification({ title: payload.notification.title, body: payload.notification.body });
+        setShow(true);
+        console.log("Thong bao da nhan: ", payload);
+      } catch (err) {
+        console.log('Lang nghe thong bao that bai: ', err);
+      }
+    };
+
+    listenForMessages();
   }, []);
 
   const onShowNotificationClicked = () => {
-    setNotification({ title: "Notification", body: "This is a test notification" });
+    setNotification({ title: "Thong bao", body: "Day la thong bao thu nghiem" });
     setShow(true);
   };
 

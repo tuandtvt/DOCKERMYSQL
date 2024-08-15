@@ -4,7 +4,6 @@ import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 import db from '../models';
 
-
 const addShop = async (req, res, next) => {
     const { name_shop, avatar_shop, background_shop, description, address_shop, user_follow, start_time, status, topic } = req.body;
 
@@ -31,7 +30,6 @@ const addShop = async (req, res, next) => {
         next(new CustomError(ERROR_CODES.SERVER_ERROR));
     }
 };
-
 
 const updateShop = async (req, res, next) => {
     const { shopId } = req.params;
@@ -60,7 +58,6 @@ const updateShop = async (req, res, next) => {
     }
 };
 
-
 const getShop = async (req, res, next) => {
     const { shopId } = req.params;
 
@@ -87,25 +84,27 @@ const addProductToShop = async (req, res, next) => {
     try {
         const shopProduct = await shopService.addProductToShop(shopId, productId, status);
 
-        const usersFollowingShop = await shopService.getUsersFollowingShop(shopId);
-        if (usersFollowingShop.length > 0) {
-            const message = {
-                title: 'Sản phẩm mới trong shop',
-                body: `Sản phẩm với ID ${productId} đã được thêm vào shop với ID ${shopId}.`
-            };
-            for (const user of usersFollowingShop) {
-                if (user.User && user.User.notificationToken) {
-                    // console.log('hihihaha', user.User)
-                    // console.log('hihihaha11', user.User.notificationToken)
-                    await notificationsService.sendNotification(user.User.notificationToken, message);
-                }
-            }
-        }
+        // const usersFollowingShop = await shopService.getUsersFollowingShop(shopId);
+        // if (usersFollowingShop.length > 0) {
+        //     const message = {
+        //         title: 'Sản phẩm mới trong shop',
+        //         body: `Sản phẩm với ID ${productId} đã được thêm vào shop với ID ${shopId}.`
+        //     };
+        //     for (const user of usersFollowingShop) {
+        //         if (user.User && user.User.notificationToken) {
+        //             await notificationsService.sendNotification(user.User.notificationToken, message);
+        //         }
+        //     }
+        // }
 
-        await notificationsService.sendNotificationToTopic('web_javascript', {
-            // title: 'Thông báo từ shop',
-            // body: `Sản phẩm mới đã được thêm vào shop!`
-        });
+        const shop = await shopService.getShopById(shopId);
+        if (shop && shop.topic) {
+            console.log('Topic:', shop.topic);
+            await notificationsService.sendNotificationToTopic(shop.topic, {
+                title: 'Sản phẩm mới trong shop',
+                body: `Sản phẩm mới đã được thêm vào shop!`
+            });
+        }
 
         res.status(201).json(shopProduct);
     } catch (error) {
@@ -132,7 +131,6 @@ const updateProductStatusInShop = async (req, res, next) => {
     }
 };
 
-
 const getProductsByShop = async (req, res, next) => {
     const { shopId } = req.params;
 
@@ -144,6 +142,7 @@ const getProductsByShop = async (req, res, next) => {
         next(new CustomError(ERROR_CODES.SERVER_ERROR));
     }
 };
+
 
 
 const updateFollowStatus = async (req, res, next) => {
@@ -170,7 +169,8 @@ const updateFollowStatus = async (req, res, next) => {
             const user = await db.User.findByPk(userId);
             if (user && user.notificationToken) {
                 const topic = `shop_${shopId}`;
-                await notificationsService.subscribeToTopic(user.notificationToken, topic);
+                const subscribeResponse = await notificationsService.subscribeToTopic(user.notificationToken, topic);
+                console.log('Subscribe response:', subscribeResponse);
             }
         }
 
@@ -180,6 +180,7 @@ const updateFollowStatus = async (req, res, next) => {
         next(new CustomError(ERROR_CODES.SERVER_ERROR));
     }
 };
+
 
 
 export default {
