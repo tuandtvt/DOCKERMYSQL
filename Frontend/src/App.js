@@ -26,7 +26,7 @@ function App() {
       console.log("Dang lay token");
       const currentToken = await fetchToken(setTokenFound);
       if (currentToken) {
-        const userId = 23;
+        const userId = 5;
         try {
           console.log("Dang gui token len server");
           const response = await axios.post('http://localhost:8080/api/v1/update-notification-token', {
@@ -35,7 +35,7 @@ function App() {
           });
           console.log('Gui token len server thanh cong: ', response.data);
         } catch (error) {
-          console.error('Loi khi gui token len server: ', error);
+          console.error('Loi khi gui token len server: ', error.response ? error.response.data : error.message);
         }
       } else {
         console.log("Khong lay duoc token.");
@@ -54,7 +54,7 @@ function App() {
         setShow(true);
         console.log("Thong bao da nhan: ", payload);
       } catch (err) {
-        console.log('Lang nghe thong bao that bai: ', err);
+        console.error('Lang nghe thong bao that bai: ', err);
       }
     };
 

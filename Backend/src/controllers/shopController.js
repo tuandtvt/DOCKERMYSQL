@@ -80,7 +80,6 @@ const addProductToShop = async (req, res, next) => {
     if (!productId || status === undefined) {
         return res.status(400).json({ message: 'Product ID and status are required' });
     }
-
     try {
         const shopProduct = await shopService.addProductToShop(shopId, productId, status);
 

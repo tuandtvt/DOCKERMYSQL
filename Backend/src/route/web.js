@@ -11,7 +11,7 @@ import checkPermision from '../middleware/checkPermision';
 import cartController from '../controllers/cartController';
 import reviewController from '../controllers/reviewController';
 import shopController from '../controllers/shopController';
-import notificationsController from '../controllers/notificationsController';
+
 
 const router = express.Router();
 
@@ -64,7 +64,7 @@ const initWebRoutes = (app) => {
   router.post('/api/shop/:shopId/product/add', shopController.addProductToShop);
   router.put('/api/shop/:shopId/product/:productId/update-status', shopController.updateProductStatusInShop);
   router.get('/api/shop/:shopId/products', shopController.getProductsByShop);
-  router.put('/api/shop/:shopId/follow', authenticateToken, shopController.updateFollowStatus);
+  router.put('/api/shop/:shopId/follow', shopController.updateFollowStatus);
 
   // Error handling middleware
   app.use('/', router);

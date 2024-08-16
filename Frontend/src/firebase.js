@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
@@ -25,9 +26,14 @@ export const fetchToken = async (setTokenFound) => {
         }
 
         console.log("Da duoc cap quyen thong bao");
+
+        const registration = await navigator.serviceWorker.ready;
+        console.log("Service Worker da san sang:", registration);
+
         console.log("Dang yeu cau token");
         const currentToken = await getToken(messaging, {
             vapidKey: "BIfCh91B51XR7eeHX5MyRGVy7HpQOlA0GWkSYJsWuINuHNckNGGC6H8OD4LjgYOj2sM0yN9WYw9QYUnb80mH47c",
+            serviceWorkerRegistration: registration
         });
 
         if (currentToken) {
