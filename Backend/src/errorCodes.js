@@ -9,6 +9,11 @@ const ERROR_CODES = {
     message: 'Invalid request parameters',
     statusCode: 400
   },
+  REVIEW_ALREADY_SUBMITTED: {
+    code: 'REVIEW_ALREADY_SUBMITTED',
+    message: 'You have rated this product and cannot change it',
+    statusCode: 400
+  },
   SERVER_ERROR: {
     code: 'SERVER_ERROR',
     message: 'Internal server error',
@@ -42,6 +47,21 @@ const ERROR_CODES = {
   PRODUCT_NOT_FOUND: {
     code: 'PRODUCT_NOT_FOUND',
     message: 'Product not found',
+    statusCode: 404
+  },
+  QUANTITY_EXCEEDS_STOCK: {
+    code: 'QUANTITY_EXCEEDS_STOCK',
+    message: 'Quantity exceeds stock',
+    statusCode: 404
+  },
+  CART_ITEM_NOT_FOUND: {
+    code: 'CART_ITEM_NOT_FOUND',
+    message: 'Cart item not found',
+    statusCode: 404
+  },
+  PERMISSION_NAME_REQUIRED: {
+    code: 'PERMISSION_NAME_REQUIRED',
+    message: 'Permision name is require',
     statusCode: 404
   },
   ACCOUNT_NOT_VERIFIED: {

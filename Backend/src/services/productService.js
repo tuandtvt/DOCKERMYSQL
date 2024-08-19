@@ -1,97 +1,91 @@
 import db from "../models";
+import CustomError from '../utils/CustomError';
+import ERROR_CODES from '../errorCodes';
 
-const addProduct = async (name, description, price, stock = 0) => {
-  try {
-    const newProduct = await db.Product.create({
-      name,
-      description,
-      price,
-      stock
-    });
-
-    return { message: 'Product added successfully', product: newProduct };
-  } catch (error) {
-    console.error("Error adding product:", error);
+const handleErrors = (error) => {
+  if (error instanceof CustomError) {
     throw error;
+  }
+  console.error('Service error:', error);
+  throw new CustomError(ERROR_CODES.SERVER_ERROR);
+};
+
+const asyncHandler = (fn) => async (...args) => {
+  try {
+    return await fn(...args);
+  } catch (error) {
+    handleErrors(error);
   }
 };
 
+const addProduct = asyncHandler(async (name, description, price, stock = 0) => {
+  const newProduct = await db.Product.create({
+    name,
+    description,
+    price,
+    stock
+  });
+  return { message: 'Product added successfully', product: newProduct };
+});
 
-const getUserProducts = async (userId) => {
-  try {
-    const carts = await db.Cart.findAll({
-      where: { user_id: userId, status: 1 },
+
+const getUserProducts = asyncHandler(async (userId) => {
+  const carts = await db.Cart.findAll({
+    where: { user_id: userId, status: 1 },
+    include: [{
+      model: db.CartItem,
+      as: 'CartItems',
       include: [{
-        model: db.CartItem,
-        as: 'CartItems',
-        include: [{
-          model: db.Product,
-          as: 'Product',
-          attributes: ['id', 'name', 'description', 'price', 'stock', 'createdAt', 'updatedAt']
-        }]
+        model: db.Product,
+        as: 'Product',
+        attributes: ['id', 'name', 'description', 'price', 'stock', 'createdAt', 'updatedAt']
       }]
-    });
+    }]
+  });
 
-    const formattedProducts = carts.flatMap(cart =>
-      cart.CartItems.map(cartItem => ({
-        cartId: cart.id,
-        cartItemId: cartItem.id,
-        productId: cartItem.product_id,
-        quantity: cartItem.quantity,
-        cartCreatedAt: cart.createdAt,
-        cartUpdatedAt: cart.updatedAt,
-        product: {
-          id: cartItem.Product.id,
-          name: cartItem.Product.name,
-          description: cartItem.Product.description,
-          price: cartItem.Product.price,
-          stock: cartItem.Product.stock,
-          createdAt: cartItem.Product.createdAt,
-          updatedAt: cartItem.Product.updatedAt
-        }
-      }))
-    );
+  const formattedProducts = carts.flatMap(cart =>
+    cart.CartItems.map(cartItem => ({
+      cartId: cart.id,
+      cartItemId: cartItem.id,
+      productId: cartItem.product_id,
+      quantity: cartItem.quantity,
+      cartCreatedAt: cart.createdAt,
+      cartUpdatedAt: cart.updatedAt,
+      product: {
+        id: cartItem.Product.id,
+        name: cartItem.Product.name,
+        description: cartItem.Product.description,
+        price: cartItem.Product.price,
+        stock: cartItem.Product.stock,
+        createdAt: cartItem.Product.createdAt,
+        updatedAt: cartItem.Product.updatedAt
+      }
+    }))
+  );
+  return formattedProducts;
+});
 
-    return formattedProducts;
-  } catch (error) {
-    console.error('Error fetching user products:', error);
-    throw error;
+const updateProductPrice = asyncHandler(async (productId, newPrice) => {
+  const [updated] = await db.Product.update({ price: newPrice }, {
+    where: { id: productId }
+  });
+
+  if (!updated) {
+    throw new Error('Product not found');
   }
-};
 
+  const updatedProduct = await db.Product.findByPk(productId);
 
+  return { message: 'Product price updated successfully', product: updatedProduct };
+});
 
-const updateProductPrice = async (productId, newPrice) => {
-  try {
-    const [updated] = await db.Product.update({ price: newPrice }, {
-      where: { id: productId }
-    });
+const getAllProducts = asyncHandler(async () => {
+  const products = await db.Product.findAll({
+    attributes: ['id', 'name', 'description', 'price', 'stock', 'createdAt', 'updatedAt']
+  });
 
-    if (!updated) {
-      throw new Error('Product not found');
-    }
-
-    const updatedProduct = await db.Product.findByPk(productId);
-
-    return { message: 'Product price updated successfully', product: updatedProduct };
-  } catch (error) {
-    console.error("Error updating product price:", error);
-    throw error;
-  }
-};
-
-const getAllProducts = async () => {
-  try {
-    const products = await db.Product.findAll({
-      attributes: ['id', 'name', 'description', 'price', 'stock', 'createdAt', 'updatedAt']
-    });
-
-    return products;
-  } catch (error) {
-    console.error('Error fetching all products:', error);
-    throw error;
-  }
-};
+  return products;
+});
 
 export default {
   addProduct,

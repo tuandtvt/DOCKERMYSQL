@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
@@ -22,7 +21,7 @@ export const fetchToken = async (setTokenFound) => {
         if (permission !== 'granted') {
             console.log("Khong co quyen thong bao");
             setTokenFound(false);
-            return;
+            return null;
         }
 
         console.log("Da duoc cap quyen thong bao");
@@ -43,10 +42,12 @@ export const fetchToken = async (setTokenFound) => {
         } else {
             console.log("Khong co token dang ky nao. Yeu cau quyen de tao token");
             setTokenFound(false);
+            return null;
         }
     } catch (err) {
         console.error("Da xay ra loi khi lay token. Chi tiet: ", err);
         setTokenFound(false);
+        return null;
     }
 };
 

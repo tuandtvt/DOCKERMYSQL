@@ -23,48 +23,47 @@ const initWebRoutes = (app) => {
   });
 
   // Xác thực và quản lý người dùng (đăng ký, đăng nhập, quên mật khẩu, đổi mật khẩu)
-  router.post('/api/register', authController.register);
-  router.get('/api/verify/:token', authController.verifyAccount);
-  router.post('/api/login', authController.login);
-  router.post('/api/change-password', authenticateToken, authController.changePassword);
-  router.post('/api/forgot-password', authController.forgotPassword);
-  router.post('/api/reset-password', authController.resetPassword);
+  router.post('/register', authController.register);
+  router.get('/verify/:token', authController.verifyAccount);
+  router.post('/login', authController.login);
+  router.post('/change-password', authenticateToken, authController.changePassword);
+  router.post('/forgot-password', authController.forgotPassword);
+  router.post('/reset-password', authController.resetPassword);
 
   // Quản lý sản phẩm (thêm sản phẩm, lấy sản phẩm của người dùng, cập nhật giá sản phẩm, danh sách sản phẩm)
-  router.post('/api/add', authenticateToken, productController.addProduct);
-  router.get('/api/user/products', authenticateToken, productController.getUserProducts);
-  router.put('/api/product/update-price', authenticateToken, checkRole('manage'), productController.updateProductPrice);
-  router.get('/api/products', productController.getAllProducts);
+  router.post('/add', authenticateToken, productController.addProduct);
+  router.get('/user/products', authenticateToken, productController.getUserProducts);
+  router.put('/product/update-price', authenticateToken, checkRole('manage'), productController.updateProductPrice);
+  router.get('/products', productController.getAllProducts);
 
   // Quản lý đơn hàng (đặt hàng, cập nhật trạng thái đơn hàng, mua lại đơn hàng)
-  router.post('/api/buy', authenticateToken, orderController.placeOrder);
-  router.put('/api/order/update-status', authenticateToken, orderController.updateOrderStatus);
-  router.post('/api/orders/repurchase', authenticateToken, orderController.repurchaseOrder);
+  router.post('/buy', authenticateToken, orderController.placeOrder);
+  router.put('/order/update-status', authenticateToken, orderController.updateOrderStatus);
+  router.post('/orders/repurchase', authenticateToken, orderController.repurchaseOrder);
 
   // Quản lý giỏ hàng (thêm vào giỏ, xóa khỏi giỏ, cập nhật số lượng, lấy thông tin giỏ hàng)
-  router.post('/api/cart/add', authenticateToken, cartController.addToCart);
-  router.delete('/api/cart/remove/:cartItem_id', authenticateToken, cartController.removeFromCart);
-  router.put('/api/cart/update/:cartItem_id', authenticateToken, cartController.updateCartItemQuantity);
-  router.get('/api/cart', cartController.getCart);
+  router.post('/cart/add', authenticateToken, cartController.addToCart);
+  router.delete('/cart/remove/:cartItem_id', authenticateToken, cartController.removeFromCart);
+  router.put('/cart/update/:cartItem_id', authenticateToken, cartController.updateCartItemQuantity);
+  router.get('/cart', cartController.getCart);
 
   // Quản lý vai trò và quyền (thêm vai trò, thêm quyền, gán quyền cho vai trò, gán vai trò cho người dùng)
-  router.post('/api/add-role', roleController.addRole);
-  router.post('/api/add-permision', permisionController.addPermision);
-  router.post('/api/role/:roleId/permision', permisionController.assignPermisionToRole);
-  router.post('/api/user/:userId/role', roleController.assignRoleToUser);
-
+  router.post('/add-role', roleController.addRole);
+  router.post('/add-permision', permisionController.addPermision);
+  router.post('/role/:roleId/permision', permisionController.assignPermisionToRole);
+  router.post('/user/:userId/role', roleController.assignRoleToUser);
   // Quản lý đánh giá sản phẩm (thêm đánh giá, lấy đánh giá sản phẩm)
-  router.post('/api/product/:product_id/review', authenticateToken, reviewController.addReview);
-  router.get('/api/product/:product_id/reviews', reviewController.getProductReviews);
+  router.post('/product/:product_id/review', authenticateToken, reviewController.addReview);
+  router.get('/product/:product_id/reviews', reviewController.getProductReviews);
 
   // Quản lý shop (thêm shop, cập nhật thông tin shop, lấy thông tin shop, thêm sản phẩm vào shop, cập nhật trạng thái sản phẩm trong shop, lấy sản phẩm theo shop, cập nhật theo dõi/hủy follow shop)
-  router.post('/api/shop/add', shopController.addShop);
-  router.put('/api/shop/:shopId/update', shopController.updateShop);
-  router.get('/api/shop/:shopId', shopController.getShop);
-  router.post('/api/shop/:shopId/product/add', shopController.addProductToShop);
-  router.put('/api/shop/:shopId/product/:productId/update-status', shopController.updateProductStatusInShop);
-  router.get('/api/shop/:shopId/products', shopController.getProductsByShop);
-  router.put('/api/shop/:shopId/follow', shopController.updateFollowStatus);
+  router.post('/shop/add', shopController.addShop);
+  router.put('/shop/:shopId/update', shopController.updateShop);
+  router.get('/shop/:shopId', shopController.getShop);
+  router.post('/shop/:shopId/product/add', shopController.addProductToShop);
+  router.put('/shop/:shopId/product/:productId/update-status', shopController.updateProductStatusInShop);
+  router.get('/shop/:shopId/products', shopController.getProductsByShop);
+  router.put('/shop/:shopId/follow', shopController.updateFollowStatus);
 
   // Error handling middleware
   app.use('/', router);

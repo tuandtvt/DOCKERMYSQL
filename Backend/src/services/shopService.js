@@ -1,13 +1,26 @@
 import db from '../models';
+import CustomError from '../utils/CustomError';
+import ERROR_CODES from '../errorCodes';
 
-const createShop = async (shopData) => {
+const handleErrors = (error) => {
+    if (error instanceof CustomError) {
+        throw error;
+    }
+    console.error('Service error:', error);
+    throw new CustomError(ERROR_CODES.SERVER_ERROR);
+};
+
+const asyncHandler = (fn) => async (...args) => {
     try {
-        const newShop = await db.Shop.create(shopData);
-        return newShop;
+        return await fn(...args);
     } catch (error) {
-        throw new Error('Error creating shop: ' + error.message);
+        handleErrors(error);
     }
 };
+const createShop = asyncHandler(async (shopData) => {
+    const newShop = await db.Shop.create(shopData);
+    return newShop;
+});
 
 const updateShop = async (shopId, updateData) => {
     const shop = await db.Shop.findByPk(shopId);
@@ -135,9 +148,6 @@ const updateFollowStatus = async (userId, shopId, status) => {
         }
     }
 };
-
-
-
 
 export default {
     createShop,

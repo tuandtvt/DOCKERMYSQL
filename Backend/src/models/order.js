@@ -22,9 +22,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     order_status: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 'pending'
+      defaultValue: 0
     },
     payment_method: {
       type: DataTypes.STRING,
@@ -67,7 +67,7 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true
   });
 
-  Order.associate = function(models) {
+  Order.associate = function (models) {
     Order.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
     Order.belongsTo(models.Cart, { foreignKey: 'cart_id', as: 'cart' });
   };

@@ -1,98 +1,89 @@
 import orderService from "../services/orderService";
-import cartService from "../services/cartService";
 import notificationsService from "../services/notificationsService";
 import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
-import { or } from "sequelize";
 import db from "../models";
 
+const OrderStatus = {
+  PENDING: 0,
+  CONFIRMED: 1,
+  SHIPPING: 2,
+  DELIVERED: 3,
+  CANCELED: 4,
+  RETURNED: 5
+};
 
-
-
-const placeOrder = async (req, res, next) => {
-  const { user_id, cart_id, address_ship, payment_method, tax, delivery_date } = req.body;
-
-  if (!user_id || !cart_id || !address_ship || !payment_method || tax === undefined || !delivery_date) {
-    return res.status(400).json({ message: 'User ID, Cart ID, address, payment method, tax, and delivery date are required' });
-  }
-
-  try {
-
-    const order = await orderService.createOrder(user_id, cart_id, address_ship, payment_method, tax, delivery_date);
-
-
-    const user = await db.User.findByPk(user_id);
-    const userToken = user ? user.notificationToken : null;
-
-
-    const message = {
-      title: 'Đặt hàng thành công',
-      body:
-        `Đơn hàng ID: ${order.id}\n` +
-        `Địa chỉ giao hàng: ${order.address_ship}\n` +
-        `Phương thức thanh toán: ${order.payment_method}\n` +
-        `Tổng số tiền: ${order.total}`
-    };
-
-
-    if (userToken) {
-      console.log('Sending notification:', message);
-      try {
-        await notificationsService.sendNotification(userToken, message);
-        console.log('Notification sent successfully');
-      } catch (error) {
-        console.error('Error sending notification:', error);
-      }
-    }
-    res.status(201).json({
-      order: order,
-      message: 'Order placed successfully'
-    });
-  } catch (error) {
-    console.error("Error placing order:", error);
-    next(new CustomError(ERROR_CODES.SERVER_ERROR));
+const handleErrors = (res, error) => {
+  if (error instanceof CustomError) {
+    res.status(error.status || 400).json({ error: error.message });
+  } else {
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch((error) => handleErrors(res, error));
+};
 
+const placeOrder = asyncHandler(async (req, res) => {
+  const { cart_id, address_ship, payment_method, tax, delivery_date } = req.body;
+  const user_id = req.user.id;
 
-const updateOrderStatus = async (req, res, next) => {
+  if (!cart_id || !address_ship || !payment_method || tax === undefined || !delivery_date) {
+    return res.status(400).json({ message: 'Cart ID, address, payment method, tax, and delivery date are required' });
+  }
+
+  const order = await orderService.createOrder(user_id, cart_id, address_ship, payment_method, tax, delivery_date);
+
+  const user = await db.User.findByPk(user_id);
+  const userToken = user ? user.notificationToken : null;
+
+  const message = {
+    title: 'Đặt hàng thành công',
+    body: `Đơn hàng ID: ${order.id}\nĐịa chỉ giao hàng: ${order.address_ship}\nPhương thức thanh toán: ${order.payment_method}\nTổng số tiền: ${order.total}`
+  };
+
+  if (userToken) {
+    try {
+      await notificationsService.sendNotification(userToken, message);
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  }
+
+  res.status(201).json({
+    order,
+    message: 'Order placed successfully'
+  });
+});
+
+const updateOrderStatus = asyncHandler(async (req, res) => {
   const { orderId, status } = req.body;
 
-  if (!orderId || !status) {
-    return res.status(400).json({ message: 'Order ID và trạng thái là bắt buộc' });
+  if (!orderId || status === undefined) {
+    return res.status(400).json({ message: 'Order ID and status are required' });
   }
 
-  const validStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'canceled', 'returned'];
-  if (!validStatuses.includes(status)) {
-    return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
+  const validStatuses = Object.values(OrderStatus);
+  if (!validStatuses.includes(parseInt(status, 10))) {
+    return res.status(400).json({ message: 'Invalid status' });
   }
 
-  try {
-    const updatedOrder = await orderService.updateOrderStatus(orderId, status);
-    res.status(200).json(updatedOrder);
-  } catch (error) {
-    console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error.message);
-    res.status(400).json({ message: error.message });
-  }
-};
+  const updatedOrder = await orderService.updateOrderStatus(orderId, parseInt(status, 10));
+  res.status(200).json(updatedOrder);
+});
 
-const repurchaseOrder = async (req, res, next) => {
-  const { orderId, user_id, address_ship, payment_method, tax, delivery_date } = req.body;
-  console.log('>>>check', orderId, user_id, address_ship, payment_method, tax, delivery_date);
-  if (!orderId || !user_id || !address_ship || !payment_method || tax === undefined || !delivery_date) {
-    return res.status(400).json({ message: 'Order ID, User ID, address, payment method, tax, and delivery date are required' });
+const repurchaseOrder = asyncHandler(async (req, res) => {
+  const { orderId, address_ship, payment_method, tax, delivery_date } = req.body;
+  const user_id = req.user.id;
+
+  if (!orderId || !address_ship || !payment_method || tax === undefined || !delivery_date) {
+    return res.status(400).json({ message: 'Order ID, address, payment method, tax, and delivery date are required' });
   }
 
-  try {
-    const newOrder = await orderService.repurchaseOrder(orderId, user_id, address_ship, payment_method, tax, delivery_date);
-    res.status(201).json(newOrder);
-  } catch (error) {
-    console.error("Error repurchasing order:", error);
-    next(new CustomError(ERROR_CODES.SERVER_ERROR));
-  }
-};
-
+  const newOrder = await orderService.repurchaseOrder(orderId, user_id, address_ship, payment_method, tax, delivery_date);
+  res.status(201).json(newOrder);
+});
 
 export default {
   placeOrder,

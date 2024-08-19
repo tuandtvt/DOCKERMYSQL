@@ -20,29 +20,20 @@ function App() {
   const [show, setShow] = useState(false);
   const [notification, setNotification] = useState({ title: '', body: '' });
   const [isTokenFound, setTokenFound] = useState(false);
+  const [currentToken, setCurrentToken] = useState(null);
 
   useEffect(() => {
-    const getTokenAndSendToServer = async () => {
+    const getToken = async () => {
       console.log("Dang lay token");
-      const currentToken = await fetchToken(setTokenFound);
-      if (currentToken) {
-        const userId = 5;
-        try {
-          console.log("Dang gui token len server");
-          const response = await axios.post('http://localhost:8080/api/v1/update-notification-token', {
-            user_id: userId,
-            notificationToken: currentToken,
-          });
-          console.log('Gui token len server thanh cong: ', response.data);
-        } catch (error) {
-          console.error('Loi khi gui token len server: ', error.response ? error.response.data : error.message);
-        }
+      const token = await fetchToken(setTokenFound);
+      if (token) {
+        setCurrentToken(token);
       } else {
         console.log("Khong lay duoc token.");
       }
     };
 
-    getTokenAndSendToServer();
+    getToken();
   }, []);
 
   useEffect(() => {
@@ -60,11 +51,6 @@ function App() {
 
     listenForMessages();
   }, []);
-
-  const onShowNotificationClicked = () => {
-    setNotification({ title: "Thong bao", body: "Day la thong bao thu nghiem" });
-    setShow(true);
-  };
 
   return (
     <Router>

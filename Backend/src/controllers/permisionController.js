@@ -1,32 +1,33 @@
 import permisionService from "../services/permisionService";
+import CustomError from '../utils/CustomError';
 
-const addPermision = async (req, res) => {
+const handleErrors = (res, error) => {
+  if (error instanceof CustomError) {
+    res.status(error.status || 400).json({ error: error.message });
+  } else {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch((error) => handleErrors(res, error));
+};
+const addPermision = asyncHandler(async (req, res) => {
   const { permision_name, description } = req.body;
 
   if (!permision_name) {
     return res.status(400).json({ message: 'Permision name is required' });
   }
+  const newPermision = await permisionService.createPermision(permision_name, description);
+  res.status(201).json(newPermision);
+});
 
-  try {
-    const newPermision = await permisionService.createPermision(permision_name, description);
-    res.status(201).json(newPermision);
-  } catch (error) {
-    console.error('Error adding permision:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-const assignPermisionToRole = async (req, res) => {
+const assignPermisionToRole = asyncHandler(async (req, res) => {
   const { roleId } = req.params;
   const { permisionId } = req.body;
-
-  try {
-    const rolePermision = await permisionService.assignPermisionToRole(roleId, permisionId);
-    res.status(201).json(rolePermision);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+  const rolePermision = await permisionService.assignPermisionToRole(roleId, permisionId);
+  res.status(201).json(rolePermision);
+});
 
 export default {
   addPermision,

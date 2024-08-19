@@ -1,8 +1,19 @@
 import cartService from "../services/cartService";
+import CustomError from '../utils/CustomError';
 
+const handleErrors = (res, error) => {
+  if (error instanceof CustomError) {
+    res.status(error.status || 400).json({ error: error.message });
+  } else {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const addToCart = async (req, res, next) => {
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch((error) => handleErrors(res, error));
+};
 
+const addToCart = asyncHandler(async (req, res) => {
   const { product_id, quantity } = req.body;
   const user_id = req.user.id;
 
@@ -10,43 +21,25 @@ const addToCart = async (req, res, next) => {
     return res.status(400).json({ message: 'Product ID and quantity are required' });
   }
 
-  try {
-    await cartService.addToCart(user_id, product_id, quantity);
+  await cartService.addToCart(user_id, product_id, quantity);
+  res.status(200).json({ message: 'Product added to cart' });
+});
 
-    res.status(200).json({ message: 'Product added to cart' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const removeFromCart = async (req, res, next) => {
+const removeFromCart = asyncHandler(async (req, res) => {
   const { cartItem_id } = req.params;
   const user_id = req.user.id;
 
-  try {
-    await cartService.removeFromCart(user_id, cartItem_id);
-    res.status(200).json({ message: 'Cart item removed' });
-  } catch (error) {
-    next(error);
-  }
-};
+  await cartService.removeFromCart(user_id, cartItem_id);
+  res.status(200).json({ message: 'Cart item removed' });
+});
 
-
-const getCart = async (req, res, next) => {
-
+const getCart = asyncHandler(async (req, res) => {
   const user_id = req.user.id;
+  const cartItems = await cartService.getCart(user_id);
+  res.status(200).json(cartItems);
+});
 
-  try {
-    const cartItems = await cartService.getCart(user_id);
-    res.status(200).json(cartItems);
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
-const updateCartItemQuantity = async (req, res, next) => {
+const updateCartItemQuantity = asyncHandler(async (req, res) => {
   const { cartItem_id } = req.params;
   const { quantity } = req.body;
   const user_id = req.user.id;
@@ -55,14 +48,9 @@ const updateCartItemQuantity = async (req, res, next) => {
     return res.status(400).json({ message: 'Valid quantity is required' });
   }
 
-  try {
-    await cartService.updateCartItemQuantity(user_id, cartItem_id, quantity);
-    res.status(200).json({ message: 'Cart item quantity updated' });
-  } catch (error) {
-    next(error);
-  }
-};
-
+  await cartService.updateCartItemQuantity(user_id, cartItem_id, quantity);
+  res.status(200).json({ message: 'Cart item quantity updated' });
+});
 
 export default {
   addToCart,

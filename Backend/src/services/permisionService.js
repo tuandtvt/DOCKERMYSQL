@@ -27,7 +27,7 @@ const assignPermisionToRole = async (roleId, permisionId) => {
     throw new Error('Permission is already assigned to the role');
   }
 
-  
+
   const rolePermision = await RolePermision.create({
     role_id: roleId,
     permision_id: permisionId
