@@ -1,6 +1,5 @@
 import db from "../models";
 import emailService from "./emailService";
-import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 
 const OrderStatus = {
@@ -12,23 +11,7 @@ const OrderStatus = {
   RETURNED: 5
 };
 
-const handleErrors = (error) => {
-  if (error instanceof CustomError) {
-    throw error;
-  }
-  console.error('Service error:', error);
-  throw new CustomError(ERROR_CODES.SERVER_ERROR);
-};
-
-const asyncHandler = (fn) => async (...args) => {
-  try {
-    return await fn(...args);
-  } catch (error) {
-    handleErrors(error);
-  }
-};
-
-const createOrder = asyncHandler(async (user_id, cart_id, address_ship, payment_method, tax, delivery_date) => {
+const createOrder = async (user_id, cart_id, address_ship, payment_method, tax, delivery_date) => {
   const transaction = await db.sequelize.transaction();
 
   const cart = await db.Cart.findOne({
@@ -44,7 +27,7 @@ const createOrder = asyncHandler(async (user_id, cart_id, address_ship, payment_
   });
 
   if (!cart) {
-    throw new CustomError(ERROR_CODES.CART_NOT_FOUND);
+    return { message: ERROR_CODES.CART_NOT_FOUND };
   }
 
   const total = cart.CartItems.reduce((acc, item) => {
@@ -68,11 +51,11 @@ const createOrder = asyncHandler(async (user_id, cart_id, address_ship, payment_
   for (const cartItem of cart.CartItems) {
     const product = await db.Product.findByPk(cartItem.product_id);
     if (!product) {
-      throw new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND);
+      return { message: ERROR_CODES.PRODUCT_NOT_FOUND };
     }
 
     if (cartItem.quantity > product.stock) {
-      throw new CustomError(ERROR_CODES.QUANTITY_EXCEEDS_STOCK);
+      return { message: ERROR_CODES.QUANTITY_EXCEEDS_STOCK };
     }
 
     product.stock -= cartItem.quantity;
@@ -84,7 +67,7 @@ const createOrder = asyncHandler(async (user_id, cart_id, address_ship, payment_
 
   await transaction.commit();
   return order;
-});
+};
 
 const validStatusTransitions = {
   [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELED],
@@ -95,21 +78,21 @@ const validStatusTransitions = {
   [OrderStatus.RETURNED]: []
 };
 
-const updateOrderStatus = asyncHandler(async (orderId, newStatus) => {
+const updateOrderStatus = async (orderId, newStatus) => {
   const order = await db.Order.findByPk(orderId, {
     attributes: ['id', 'user_id', 'total', 'order_status', 'payment_method', 'address_ship', 'tax', 'delivery_date', 'cart_id', 'createdAt', 'updatedAt'],
     include: [{ model: db.Cart, as: 'cart', include: [{ model: db.CartItem, as: 'CartItems', include: ['Product'] }] }]
   });
 
   if (!order) {
-    throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
+    return { message: ERROR_CODES.ORDER_NOT_FOUND };
   }
 
   const currentStatus = order.order_status;
   const validTransitions = validStatusTransitions[currentStatus];
 
   if (!validTransitions.includes(newStatus)) {
-    throw new CustomError(ERROR_CODES.INVALID_STATUS_TRANSITION);
+    return { message: ERROR_CODES.INVALID_STATUS_TRANSITION };
   }
 
   order.order_status = newStatus;
@@ -167,9 +150,9 @@ Trân trọng,`;
   }
 
   return order;
-});
+};
 
-const repurchaseOrder = asyncHandler(async (orderId, address_ship, payment_method, tax, delivery_date) => {
+const repurchaseOrder = async (orderId, address_ship, payment_method, tax, delivery_date) => {
   const transaction = await db.sequelize.transaction();
 
   const oldOrder = await db.Order.findByPk(orderId, {
@@ -177,7 +160,7 @@ const repurchaseOrder = asyncHandler(async (orderId, address_ship, payment_metho
   });
 
   if (!oldOrder) {
-    throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
+    return { message: ERROR_CODES.OLD_ORDER_NOT_FOUND };
   }
 
   const cart = await db.Cart.create({
@@ -211,7 +194,7 @@ const repurchaseOrder = asyncHandler(async (orderId, address_ship, payment_metho
 
   await transaction.commit();
   return newOrder;
-});
+};
 
 export default {
   createOrder,

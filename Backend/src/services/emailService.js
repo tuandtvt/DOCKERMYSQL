@@ -1,23 +1,5 @@
 require("dotenv").config();
 import nodemailer from 'nodemailer';
-import CustomError from '../utils/CustomError';
-import ERROR_CODES from '../errorCodes';
-
-const handleErrors = (error) => {
-  if (error instanceof CustomError) {
-    throw error;
-  }
-  console.error('Service error:', error);
-  throw new CustomError(ERROR_CODES.SERVER_ERROR);
-};
-
-const asyncHandler = (fn) => async (...args) => {
-  try {
-    return await fn(...args);
-  } catch (error) {
-    handleErrors(error);
-  }
-};
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -29,15 +11,23 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendEmail = asyncHandler(async (to, subject, text) => {
-  await transporter.sendMail({
-    from: process.env.SMTP_USER,
-    to,
-    subject,
-    text,
-  });
-});
-
+const sendEmail = async (to, subject, text) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to,
+      subject,
+      text,
+    });
+    return { message: 'Email sent successfully' };
+  } catch (error) {
+    console.error('Service error:', error);
+    if (error.responseCode) {
+      return { errCode: error.responseCode, message: error.message };
+    }
+    return { errCode: 500, message: 'Internal Server Error' };
+  }
+};
 export default {
   sendEmail,
 };

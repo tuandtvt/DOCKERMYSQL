@@ -14,6 +14,91 @@ const ERROR_CODES = {
     message: 'You have rated this product and cannot change it',
     statusCode: 400
   },
+  CART_NOT_FOUND: {
+    code: 'CART_NOT_FOUND',
+    message: 'Cart not found',
+    statusCode: 400
+  },
+  EMAIL_NOT_FOUND: {
+    code: 'EMAIL_NOT_FOUND',
+    message: 'Email not found',
+    statusCode: 400
+  },
+  PERMISION_NOT_FOUND: {
+    code: 'PERMISION_NOT_FOUND',
+    message: 'Permision not found',
+    statusCode: 400
+  },
+  PERMISION_ALREADY_ASSIGNED: {
+    code: 'PERMISION_ALREADY_ASSIGNED',
+    message: 'Permision already assigned',
+    statusCode: 400
+  },
+  SHOP_NOT_FOUND: {
+    code: 'SHOP_NOT_FOUND',
+    message: 'Shop not found',
+    statusCode: 400
+  },
+  INVALID_STATUS_VALUE: {
+    code: 'INVALID_STATUS_VALUE',
+    message: 'Invalid status value',
+    statusCode: 400
+  },
+  ROLE_NOT_FOUND: {
+    code: 'ROLE_NOT_FOUND',
+    message: 'Role not found',
+    statusCode: 400
+  },
+  ROLE_ALREADY_ASSIGNED: {
+    code: 'ROLE_ALREADY_ASSIGNED',
+    message: 'Role already assigned',
+    statusCode: 400
+  },
+  OLD_ORDER_NOT_FOUND: {
+    code: 'OLD_ORDER_NOT_FOUND',
+    message: 'Old order not found',
+    statusCode: 400
+  },
+  PERMISION_NAME_REQUIRED: {
+    code: 'PERMISION_NAME_REQUIRED',
+    message: 'Permision name required',
+    statusCode: 400
+  },
+  ROLE_NAME_REQUIRED: {
+    code: 'ROLE_NAME_REQUIRED',
+    message: 'Role name required',
+    statusCode: 400
+  },
+  PERMISION_CREATION_FAILED: {
+    code: 'PERMISION_CREATION_FAILED',
+    message: 'Permision creation failed',
+    statusCode: 400
+  },
+  PRODUCT_CREATION_FAILED: {
+    code: 'PRODUCT_CREATION_FAILED',
+    message: 'Product creation failed',
+    statusCode: 400
+  },
+  PRODUCT_FETCH_FAILED: {
+    code: 'PRODUCT_FETCH_FAILED',
+    message: 'Product fetch failed',
+    statusCode: 400
+  },
+  PRODUCT_PRICE_UPDATE_FAILED: {
+    code: 'PRODUCT_PRICE_UPDATE_FAILED',
+    message: 'Product price update failed',
+    statusCode: 400
+  },
+  ROLE_PERMISION_CREATION_FAILED: {
+    code: 'ROLE_PERMISION_CREATION_FAILED',
+    message: 'Role permision creation failed',
+    statusCode: 400
+  },
+  INVALID_STATUS_TRANSITION: {
+    code: 'INVALID_STATUS_TRANSITION',
+    message: 'Invalid status transition',
+    statusCode: 400
+  },
   SERVER_ERROR: {
     code: 'SERVER_ERROR',
     message: 'Internal server error',
@@ -49,6 +134,11 @@ const ERROR_CODES = {
     message: 'Product not found',
     statusCode: 404
   },
+  ORDER_NOT_FOUND: {
+    code: 'ORDER_NOT_FOUND',
+    message: 'Order not found',
+    statusCode: 404
+  },
   QUANTITY_EXCEEDS_STOCK: {
     code: 'QUANTITY_EXCEEDS_STOCK',
     message: 'Quantity exceeds stock',
@@ -61,7 +151,7 @@ const ERROR_CODES = {
   },
   PERMISSION_NAME_REQUIRED: {
     code: 'PERMISSION_NAME_REQUIRED',
-    message: 'Permision name is require',
+    message: 'Permission name is required',
     statusCode: 404
   },
   ACCOUNT_NOT_VERIFIED: {

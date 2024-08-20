@@ -1,33 +1,27 @@
 import reviewService from "../services/reviewService";
-import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
+import { asyncHandler } from "../utils/CustomError";
 
-const handleErrors = (res, error) => {
-  if (error instanceof CustomError) {
-    res.status(error.status || 400).json({ error: error.message });
-  } else {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch((error) => handleErrors(res, error));
-};
 
 const addReview = asyncHandler(async (req, res, next) => {
-  const { rating, comment } = req.body;
+  const { rating, comment, cart_item_id } = req.body;
   const { product_id } = req.params;
   const user_id = req.user.id;
 
   if (!product_id || !rating || !comment) {
-    return next(new CustomError(ERROR_CODES.INVALID_REQUEST));
+    return res.status(400).json({ message: ERROR_CODES.INVALID_REQUEST });
   }
-  const review = await reviewService.addReview(user_id, product_id, rating, comment);
-  res.status(201).json(review);
+
+  const result = await reviewService.addReview(user_id, product_id, rating, comment, cart_item_id);
+
+
+
+  res.status(201).json(result);
 });
 
 const getProductReviews = asyncHandler(async (req, res, next) => {
   const { product_id } = req.params;
+
   const reviews = await reviewService.getProductReviews(product_id);
   res.status(200).json(reviews);
 });

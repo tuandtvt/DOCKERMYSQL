@@ -1,7 +1,6 @@
 import orderService from "../services/orderService";
 import notificationsService from "../services/notificationsService";
-import CustomError from '../utils/CustomError';
-import ERROR_CODES from '../errorCodes';
+import { asyncHandler, sendResponse } from '../utils/CustomError';
 import db from "../models";
 
 const OrderStatus = {
@@ -13,27 +12,19 @@ const OrderStatus = {
   RETURNED: 5
 };
 
-const handleErrors = (res, error) => {
-  if (error instanceof CustomError) {
-    res.status(error.status || 400).json({ error: error.message });
-  } else {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch((error) => handleErrors(res, error));
-};
-
 const placeOrder = asyncHandler(async (req, res) => {
   const { cart_id, address_ship, payment_method, tax, delivery_date } = req.body;
   const user_id = req.user.id;
 
   if (!cart_id || !address_ship || !payment_method || tax === undefined || !delivery_date) {
-    return res.status(400).json({ message: 'Cart ID, address, payment method, tax, and delivery date are required' });
+    return sendResponse(res, { message: 'Cart ID, address, payment method, tax, and delivery date are required' }, 400);
   }
 
   const order = await orderService.createOrder(user_id, cart_id, address_ship, payment_method, tax, delivery_date);
+
+  if (order.message) {
+    return sendResponse(res, { message: order.message }, 400);
+  }
 
   const user = await db.User.findByPk(user_id);
   const userToken = user ? user.notificationToken : null;
@@ -51,26 +42,28 @@ const placeOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  res.status(201).json({
-    order,
-    message: 'Order placed successfully'
-  });
+  sendResponse(res, order, 201);
 });
 
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { orderId, status } = req.body;
 
   if (!orderId || status === undefined) {
-    return res.status(400).json({ message: 'Order ID and status are required' });
+    return sendResponse(res, { message: 'Order ID and status are required' }, 400);
   }
 
   const validStatuses = Object.values(OrderStatus);
   if (!validStatuses.includes(parseInt(status, 10))) {
-    return res.status(400).json({ message: 'Invalid status' });
+    return sendResponse(res, { message: 'Invalid status' }, 400);
   }
 
   const updatedOrder = await orderService.updateOrderStatus(orderId, parseInt(status, 10));
-  res.status(200).json(updatedOrder);
+
+  if (updatedOrder.message) {
+    return sendResponse(res, { message: updatedOrder.message }, 400);
+  }
+
+  sendResponse(res, updatedOrder);
 });
 
 const repurchaseOrder = asyncHandler(async (req, res) => {
@@ -78,11 +71,16 @@ const repurchaseOrder = asyncHandler(async (req, res) => {
   const user_id = req.user.id;
 
   if (!orderId || !address_ship || !payment_method || tax === undefined || !delivery_date) {
-    return res.status(400).json({ message: 'Order ID, address, payment method, tax, and delivery date are required' });
+    return sendResponse(res, { message: 'Order ID, address, payment method, tax, and delivery date are required' }, 400);
   }
 
-  const newOrder = await orderService.repurchaseOrder(orderId, user_id, address_ship, payment_method, tax, delivery_date);
-  res.status(201).json(newOrder);
+  const newOrder = await orderService.repurchaseOrder(orderId, address_ship, payment_method, tax, delivery_date);
+
+  if (newOrder.message) {
+    return sendResponse(res, { message: newOrder.message }, 400);
+  }
+
+  sendResponse(res, newOrder, 201);
 });
 
 export default {

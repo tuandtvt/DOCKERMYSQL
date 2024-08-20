@@ -1,4 +1,5 @@
 'use strict';
+
 module.exports = (sequelize, DataTypes) => {
   const Review = sequelize.define('Review', {
     id: {
@@ -42,6 +43,16 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0
     },
+    cart_item_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'CartItems',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    }
   }, {
     tableName: 'Reviews',
     timestamps: true
@@ -50,6 +61,7 @@ module.exports = (sequelize, DataTypes) => {
   Review.associate = function (models) {
     Review.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
     Review.belongsTo(models.Product, { foreignKey: 'product_id', as: 'product' });
+    Review.belongsTo(models.CartItem, { foreignKey: 'cart_item_id', as: 'cartItem' });
   };
 
   return Review;

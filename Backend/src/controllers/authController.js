@@ -1,26 +1,5 @@
 import authService from "../services/authService";
-import CustomError from '../utils/CustomError';
-import db from "../models";
-import sendResponse from "../middleware/sendRespone";
-
-const handleErrors = (res, error) => {
-  if (error instanceof CustomError) {
-    res.status(error.status || 400).json({ error: error.message });
-  } else {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch((error) => handleErrors(res, error));
-};
-
-// const sendResponse = (res, result) => {
-//   const status = result.errCode === 0 ? 200 : 400;
-//   res.status(status).json(result);
-// };
-
+import { asyncHandler, sendResponse } from '../utils/CustomError';
 
 const register = asyncHandler(async (req, res) => {
   const { username, email, password, address } = req.body;
@@ -33,7 +12,6 @@ const verifyAccount = asyncHandler(async (req, res) => {
   const result = await authService.verifyAccount(token);
   sendResponse(res, result);
 });
-
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;

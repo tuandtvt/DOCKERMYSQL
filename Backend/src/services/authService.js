@@ -1,32 +1,16 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../models';
-import CustomError from '../utils/CustomError';
-import ERROR_CODES from '../errorCodes';
 import emailService from './emailService';
+import ERROR_CODES from '../errorCodes';
 
 const generateToken = (payload, expiresIn = '1d') =>
   jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 
-const handleErrors = (error) => {
-  if (error instanceof CustomError) {
-    throw error;
-  }
-  console.error('Service error:', error);
-  throw new CustomError(ERROR_CODES.SERVER_ERROR);
-};
-
-const asyncHandler = (fn) => async (...args) => {
-  try {
-    return await fn(...args);
-  } catch (error) {
-    handleErrors(error);
-  }
-};
-
-const register = asyncHandler(async (username, email, password, address) => {
-  if (await db.User.findOne({ where: { email } })) {
-    throw new CustomError(ERROR_CODES.EMAIL_ALREADY_EXISTS);
+const register = async (username, email, password, address) => {
+  const existingUser = await db.User.findOne({ where: { email } });
+  if (existingUser) {
+    return { message: ERROR_CODES.EMAIL_ALREADY_EXISTS };
   }
 
   const hashedPassword = await bcrypt.hash(password, 8);
@@ -48,43 +32,46 @@ const register = asyncHandler(async (username, email, password, address) => {
   );
 
   return {
-    errCode: 0,
     message: 'User registered successfully. Please check your email to verify your account.',
     user: newUser,
   };
-});
+};
 
-const verifyAccount = asyncHandler(async (token) => {
-  const { id } = jwt.verify(token, process.env.JWT_SECRET);
-  const user = await db.User.findByPk(id);
+const verifyAccount = async (token) => {
+  try {
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.User.findByPk(id);
 
-  if (!user) throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
-  if (user.status) throw new CustomError(ERROR_CODES.ACCOUNT_ALREADY_VERIFIED);
+    if (!user) return { message: ERROR_CODES.USER_NOT_FOUND };
+    if (user.status) return { message: ERROR_CODES.USER_STATUS_ALREADY_VERIFIED };
 
-  user.status = true;
-  await user.save();
+    user.status = true;
+    await user.save();
 
-  return { errCode: 0, message: 'Account verified successfully' };
-});
+    return { message: 'Account verified successfully' };
+  } catch (error) {
+    return { message: ERROR_CODES.INVALID_OR_EXPIRED_TOKEN };
+  }
+};
 
-const login = asyncHandler(async (email, password) => {
+const login = async (email, password) => {
   const user = await db.User.findOne({ where: { email } });
-  if (!user) throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
-  if (!user.status) throw new CustomError(ERROR_CODES.ACCOUNT_NOT_VERIFIED);
+  if (!user) return { message: ERROR_CODES.USER_NOT_FOUND };
+  if (!user.status) return { message: ERROR_CODES.ACCOUNT_NOT_VERIFIED };
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) throw new CustomError(ERROR_CODES.INVALID_PASSWORD);
+  if (!isPasswordValid) return { message: ERROR_CODES.INVALID_PASSWORD };
 
   const token = generateToken({ id: user.id, email: user.email });
-  return { errCode: 0, message: 'Login successful', token };
-});
+  return { message: 'Login successful', token };
+};
 
-const changePassword = asyncHandler(async (email, currentPassword, newPassword) => {
+const changePassword = async (email, currentPassword, newPassword) => {
   const user = await db.User.findOne({ where: { email } });
-  if (!user) throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
+  if (!user) return { message: ERROR_CODES.USER_NOT_FOUND };
 
   const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-  if (!isCurrentPasswordValid) throw new CustomError(ERROR_CODES.INVALID_PASSWORD);
+  if (!isCurrentPasswordValid) return { message: ERROR_CODES.INVALID_CURRENT_PASSWORD };
 
   const hashedPassword = await bcrypt.hash(newPassword, 8);
   await user.update({ password: hashedPassword });
@@ -95,12 +82,12 @@ const changePassword = asyncHandler(async (email, currentPassword, newPassword) 
     `Xin chào ${user.username},\n\nMật khẩu của bạn đã được thay đổi.\n\nNếu có vấn đề gì về mật khẩu, vui lòng liên hệ để được hỗ trợ\n\nTrân trọng,\nTuấn`
   );
 
-  return { errCode: 0, message: 'Password changed successfully' };
-});
+  return { message: 'Password changed successfully' };
+};
 
-const forgotPassword = asyncHandler(async (email) => {
+const forgotPassword = async (email) => {
   const user = await db.User.findOne({ where: { email } });
-  if (!user) throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
+  if (!user) return { message: ERROR_CODES.USER_NOT_FOUND };
 
   const token = generateToken({ id: user.id });
   await emailService.sendEmail(
@@ -109,30 +96,33 @@ const forgotPassword = asyncHandler(async (email) => {
     `Xin chào,\n\nĐể lấy lại mật khẩu, bạn vui lòng nhấn vào link: ${process.env.REACT_URL}/api/v1/reset-password/${token}\n\nTrân trọng,\nTuấn`
   );
 
-  return { errCode: 0, message: 'Password reset email sent successfully.' };
-});
+  return { message: 'Password reset email sent successfully.' };
+};
 
-const resetPassword = asyncHandler(async (token, newPassword) => {
-  const { id } = jwt.verify(token, process.env.JWT_SECRET);
-  const user = await db.User.findByPk(id);
-  if (!user) throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
+const resetPassword = async (token, newPassword) => {
+  try {
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.User.findByPk(id);
+    if (!user) return { message: ERROR_CODES.USER_NOT_FOUND };
 
-  const hashedPassword = await bcrypt.hash(newPassword, 8);
-  await user.update({ password: hashedPassword });
+    const hashedPassword = await bcrypt.hash(newPassword, 8);
+    await user.update({ password: hashedPassword });
 
-  return { errCode: 0, message: 'Password reset successfully.' };
-});
-
-const updateNotificationToken = asyncHandler(async (user_id, notificationToken) => {
-  const user = await db.User.findByPk(user_id);
-  if (!user) {
-    throw new CustomError(ERROR_CODES.USER_NOT_FOUND);
+    return { message: 'Password reset successfully.' };
+  } catch (error) {
+    return { message: ERROR_CODES.INVALID_OR_EXPIRED_TOKEN };
   }
+};
+
+const updateNotificationToken = async (user_id, notificationToken) => {
+  const user = await db.User.findByPk(user_id);
+  if (!user) return { message: ERROR_CODES.USER_NOT_FOUND };
+
   user.notificationToken = notificationToken;
   await user.save();
 
   return { message: 'Notification token đã được cập nhật thành công' };
-});
+};
 
 export default {
   register,

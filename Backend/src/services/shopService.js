@@ -1,41 +1,34 @@
 import db from '../models';
-import CustomError from '../utils/CustomError';
 import ERROR_CODES from '../errorCodes';
 
-const handleErrors = (error) => {
-    if (error instanceof CustomError) {
-        throw error;
-    }
-    console.error('Service error:', error);
-    throw new CustomError(ERROR_CODES.SERVER_ERROR);
-};
-
-const asyncHandler = (fn) => async (...args) => {
+const createShop = async (shopData) => {
     try {
-        return await fn(...args);
+        return await db.Shop.create(shopData);
     } catch (error) {
-        handleErrors(error);
+        console.error('Service error:', error);
+        return { message: ERROR_CODES.SERVER_ERROR };
     }
 };
-const createShop = asyncHandler(async (shopData) => {
-    const newShop = await db.Shop.create(shopData);
-    return newShop;
-});
 
 const updateShop = async (shopId, updateData) => {
-    const shop = await db.Shop.findByPk(shopId);
-    if (!shop) {
-        throw new Error('Shop not found');
-    }
-
-    for (const [key, value] of Object.entries(updateData)) {
-        if (value !== undefined) {
-            shop[key] = value;
+    try {
+        const shop = await db.Shop.findByPk(shopId);
+        if (!shop) {
+            return { message: ERROR_CODES.SHOP_NOT_FOUND };
         }
-    }
 
-    await shop.save();
-    return shop;
+        for (const [key, value] of Object.entries(updateData)) {
+            if (value !== undefined) {
+                shop[key] = value;
+            }
+        }
+
+        await shop.save();
+        return shop;
+    } catch (error) {
+        console.error('Service error:', error);
+        return { message: ERROR_CODES.SERVER_ERROR };
+    }
 };
 
 const getShopById = async (shopId) => {
@@ -43,35 +36,45 @@ const getShopById = async (shopId) => {
 };
 
 const addProductToShop = async (shopId, productId, status) => {
-    const shop = await db.Shop.findByPk(shopId);
-    if (!shop) {
-        throw new Error('Shop not found');
-    }
+    try {
+        const shop = await db.Shop.findByPk(shopId);
+        if (!shop) {
+            return { message: ERROR_CODES.SHOP_NOT_FOUND };
+        }
 
-    const product = await db.Product.findByPk(productId);
-    if (!product) {
-        throw new Error('Product not found');
-    }
+        const product = await db.Product.findByPk(productId);
+        if (!product) {
+            return { message: ERROR_CODES.PRODUCT_NOT_FOUND };
+        }
 
-    return db.ShopProduct.create({
-        shop_id: shopId,
-        product_id: productId,
-        status
-    });
+        return await db.ShopProduct.create({
+            shop_id: shopId,
+            product_id: productId,
+            status
+        });
+    } catch (error) {
+        console.error('Service error:', error);
+        return { message: ERROR_CODES.SERVER_ERROR };
+    }
 };
 
 const updateProductStatus = async (shopId, productId, status) => {
-    const shopProduct = await db.ShopProduct.findOne({
-        where: { shop_id: shopId, product_id: productId }
-    });
+    try {
+        const shopProduct = await db.ShopProduct.findOne({
+            where: { shop_id: shopId, product_id: productId }
+        });
 
-    if (!shopProduct) {
-        throw new Error('Product not found in this shop');
+        if (!shopProduct) {
+            return { message: ERROR_CODES.PRODUCT_NOT_FOUND_IN_SHOP };
+        }
+
+        shopProduct.status = status;
+        await shopProduct.save();
+        return shopProduct;
+    } catch (error) {
+        console.error('Service error:', error);
+        return { message: ERROR_CODES.SERVER_ERROR };
     }
-
-    shopProduct.status = status;
-    await shopProduct.save();
-    return shopProduct;
 };
 
 const getProductsByShop = async (shopId) => {
@@ -80,7 +83,7 @@ const getProductsByShop = async (shopId) => {
         include: [{ model: db.Product, as: 'Product' }]
     });
 
-    const formattedShopProducts = shopProducts.map(shopProduct => {
+    return shopProducts.map(shopProduct => {
         const product = shopProduct.Product;
         return {
             id: shopProduct.id,
@@ -100,52 +103,44 @@ const getProductsByShop = async (shopId) => {
             }
         };
     });
-
-    return formattedShopProducts;
 };
-
-
-const getUsersFollowingShop = async (shopId) => {
-    return db.ShopUser.findAll({
-        where: { shop_id: shopId, status: 1 },
-        include: [{ model: db.User, as: 'User' }]
-    });
-};
-
 
 const updateFollowStatus = async (userId, shopId, status) => {
-    if (typeof status !== 'number' || (status !== 0 && status !== 1)) {
-        throw new Error('Invalid status value. It must be 0 or 1.');
-    }
-
-    const followRecord = await db.ShopUser.findOne({
-        where: { user_id: userId, shop_id: shopId }
-    });
-
-    if (followRecord) {
-        if (followRecord.status === 0 && status === 1) {
-            followRecord.status = status;
-            await followRecord.save();
-            return followRecord;
-        } else if (followRecord.status === 1 && status === 0) {
-
-            followRecord.status = status;
-            await followRecord.save();
-            return followRecord;
-        } else {
-            throw new Error('User already follows this shop or already unfollowed.');
+    try {
+        if (typeof status !== 'number' || (status !== 0 && status !== 1)) {
+            return { message: ERROR_CODES.INVALID_STATUS_VALUE };
         }
-    } else {
 
-        if (status === 1) {
-            return db.ShopUser.create({
-                user_id: userId,
-                shop_id: shopId,
-                status
-            });
+        const followRecord = await db.ShopUser.findOne({
+            where: { user_id: userId, shop_id: shopId }
+        });
+
+        if (followRecord) {
+            if (followRecord.status === 0 && status === 1) {
+                followRecord.status = status;
+                await followRecord.save();
+                return followRecord;
+            } else if (followRecord.status === 1 && status === 0) {
+                followRecord.status = status;
+                await followRecord.save();
+                return followRecord;
+            } else {
+                return { message: ERROR_CODES.FOLLOW_STATUS_UNCHANGED };
+            }
         } else {
-            throw new Error('User does not follow this shop yet.');
+            if (status === 1) {
+                return await db.ShopUser.create({
+                    user_id: userId,
+                    shop_id: shopId,
+                    status
+                });
+            } else {
+                return { message: ERROR_CODES.FOLLOW_STATUS_NOT_EXIST };
+            }
         }
+    } catch (error) {
+        console.error('Service error:', error);
+        return { message: ERROR_CODES.SERVER_ERROR };
     }
 };
 
@@ -156,6 +151,5 @@ export default {
     addProductToShop,
     updateProductStatus,
     getProductsByShop,
-    getUsersFollowingShop,
     updateFollowStatus
 };

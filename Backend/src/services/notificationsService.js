@@ -1,65 +1,63 @@
 import admin from '../firebaseAdmin';
-import CustomError from '../utils/CustomError';
-import ERROR_CODES from '../errorCodes';
 
-const handleErrors = (error) => {
-    if (error instanceof CustomError) {
-        throw error;
-    }
-    console.error('Service error:', error);
-    throw new CustomError(ERROR_CODES.SERVER_ERROR);
-};
-
-const asyncHandler = (fn) => async (...args) => {
-    try {
-        return await fn(...args);
-    } catch (error) {
-        handleErrors(error);
-    }
-};
-
-const sendNotification = asyncHandler(async (token, message) => {
+const sendNotification = async (token, message) => {
     if (!token) {
-        throw new Error('Notification token is required');
+        return { errCode: 1, message: 'Notification token is required' };
     }
 
-    const notificationMessage = {
-        token: token,
-        notification: {
-            title: message.title,
-            body: message.body,
-        },
-    };
-    const response = await admin.messaging().send(notificationMessage);
-    console.log('Notification sent:', response);
-    return response;
-});
+    try {
+        const notificationMessage = {
+            token: token,
+            notification: {
+                title: message.title,
+                body: message.body,
+            },
+        };
+        const response = await admin.messaging().send(notificationMessage);
+        console.log('Notification sent:', response);
+        return { message: 'Notification sent successfully', response };
+    } catch (error) {
+        console.error('Service error:', error);
+        return { errCode: 500, message: 'Failed to send notification' };
+    }
+};
 
-const sendNotificationToTopic = asyncHandler(async (topic, message) => {
+const sendNotificationToTopic = async (topic, message) => {
     if (!topic) {
-        throw new Error('Topic is required');
+        return { errCode: 1, message: 'Topic is required' };
     }
-    const notificationMessage = {
-        topic: topic,
-        notification: {
-            title: message.title,
-            body: message.body,
-        },
-    };
-    const response = await admin.messaging().send(notificationMessage);
-    console.log('Notification sent to topic:', response);
-    return response;
-});
 
-const subscribeToTopic = asyncHandler(async (token, topic) => {
+    try {
+        const notificationMessage = {
+            topic: topic,
+            notification: {
+                title: message.title,
+                body: message.body,
+            },
+        };
+        const response = await admin.messaging().send(notificationMessage);
+        console.log('Notification sent to topic:', response);
+        return { message: 'Notification sent to topic successfully', response };
+    } catch (error) {
+        console.error('Service error:', error);
+        return { errCode: 500, message: 'Failed to send notification to topic' };
+    }
+};
+
+const subscribeToTopic = async (token, topic) => {
     if (!token || !topic) {
-        throw new Error('Token and topic are required');
+        return { errCode: 1, message: 'Token and topic are required' };
     }
-    const response = await admin.messaging().subscribeToTopic(token, topic);
-    console.log('Subscribed to topic:', response);
-    return response;
-});
 
+    try {
+        const response = await admin.messaging().subscribeToTopic(token, topic);
+        console.log('Subscribed to topic:', response);
+        return { message: 'Subscribed to topic successfully', response };
+    } catch (error) {
+        console.error('Service error:', error);
+        return { errCode: 500, message: 'Failed to subscribe to topic' };
+    }
+};
 
 export default {
     sendNotification,
