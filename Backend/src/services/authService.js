@@ -7,35 +7,51 @@ import ERROR_CODES from '../errorCodes';
 const generateToken = (payload, expiresIn = '1d') =>
   jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 
+
 const register = async (username, email, password, address) => {
-  const existingUser = await db.User.findOne({ where: { email } });
-  if (existingUser) {
-    return { message: ERROR_CODES.EMAIL_ALREADY_EXISTS };
+  console.log("Registering user:", username, email);
+
+  try {
+    const existingUser = await db.User.findOne({ where: { email } });
+    if (existingUser) {
+      console.log("Email already exists:", email);
+      return { message: ERROR_CODES.EMAIL_ALREADY_EXISTS };
+    }
+
+    console.log("Hashing password...");
+    const hashedPassword = await bcrypt.hash(password, 8);
+
+    console.log("Creating new user...");
+    const newUser = await db.User.create({
+      username,
+      email,
+      password: hashedPassword,
+      address,
+      status: false
+    });
+
+    console.log("User created:", newUser);
+    const token = generateToken({ id: newUser.id });
+    const verifyLink = `${process.env.FRONTEND_URL}/api/verify/${token}`;
+    console.log("Generated verify link:", verifyLink);
+
+    console.log("Sending verification email to:", email);
+    await emailService.sendEmail(
+      email,
+      'Xác thực tài khoản',
+      `Xin chào ${username},\n\nVui lòng xác minh tài khoản của bạn bằng cách nhấp vào liên kết: ${verifyLink}\n\nTrân trọng,\nTuan`
+    );
+
+    return {
+      message: 'User registered successfully. Please check your email to verify your account.',
+      user: newUser,
+    };
+  } catch (error) {
+    console.error("Error in authService register:", error);
+    throw new Error("Error registering user");
   }
-
-  const hashedPassword = await bcrypt.hash(password, 8);
-  const newUser = await db.User.create({
-    username,
-    email,
-    password: hashedPassword,
-    address,
-    status: false
-  });
-
-  const token = generateToken({ id: newUser.id });
-  const verifyLink = `${process.env.FRONTEND_URL}/api/verify/${token}`;
-
-  await emailService.sendEmail(
-    email,
-    'Xác thực tài khoản',
-    `Xin chào ${username},\n\nVui lòng xác minh tài khoản của bạn bằng cách nhấp vào liên kết: ${verifyLink}\n\nTrân trọng,\nTuan`
-  );
-
-  return {
-    message: 'User registered successfully. Please check your email to verify your account.',
-    user: newUser,
-  };
 };
+
 
 const verifyAccount = async (token) => {
   try {

@@ -1,6 +1,7 @@
 import db from "../models";
 import emailService from "./emailService";
 import ERROR_CODES from '../errorCodes';
+import { sendMessageToQueue } from './queueService';
 
 const OrderStatus = {
   PENDING: 0,
@@ -12,61 +13,74 @@ const OrderStatus = {
 };
 
 const createOrder = async (user_id, cart_id, address_ship, payment_method, tax, delivery_date) => {
-  const transaction = await db.sequelize.transaction();
+  try {
+    console.log('Starting transaction...');
+    const transaction = await db.sequelize.transaction();
 
-  const cart = await db.Cart.findOne({
-    where: {
-      id: cart_id, user_id,
-      status: OrderStatus.PENDING
-    },
-    include: [{
-      model: db.CartItem,
-      as: 'CartItems',
-      include: ['Product']
-    }]
-  });
+    console.log('Finding cart...');
+    const cart = await db.Cart.findOne({
+      where: {
+        id: cart_id, user_id,
+        status: OrderStatus.PENDING
+      },
+      include: [{
+        model: db.CartItem,
+        as: 'CartItems',
+        include: ['Product']
+      }]
+    });
 
-  if (!cart) {
-    return { message: ERROR_CODES.CART_NOT_FOUND };
-  }
-
-  const total = cart.CartItems.reduce((acc, item) => {
-    const total_item_price = item.quantity * parseFloat(item.Product.price);
-    const taxed_price = total_item_price * (1 + tax / 100);
-    return acc + taxed_price;
-  }, 0);
-
-  const order = await db.Order.create({
-    user_id,
-    total,
-    address_ship,
-    payment_method,
-    tax,
-    delivery_date,
-    cart_id,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }, { transaction });
-
-  for (const cartItem of cart.CartItems) {
-    const product = await db.Product.findByPk(cartItem.product_id);
-    if (!product) {
-      return { message: ERROR_CODES.PRODUCT_NOT_FOUND };
+    if (!cart) {
+      console.log('Cart not found');
+      return { message: ERROR_CODES.CART_NOT_FOUND };
     }
 
-    if (cartItem.quantity > product.stock) {
-      return { message: ERROR_CODES.QUANTITY_EXCEEDS_STOCK };
+    console.log('Calculating total...');
+    const total = cart.CartItems.reduce((acc, item) => {
+      const total_item_price = item.quantity * parseFloat(item.Product.price);
+      const taxed_price = total_item_price * (1 + tax / 100);
+      return acc + taxed_price;
+    }, 0);
+
+    console.log('Creating order...');
+    const order = await db.Order.create({
+      user_id,
+      total,
+      address_ship,
+      payment_method,
+      tax,
+      delivery_date,
+      cart_id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }, { transaction });
+
+    for (const cartItem of cart.CartItems) {
+      const product = await db.Product.findByPk(cartItem.product_id);
+      if (!product) {
+        console.log('Product not found:', cartItem.product_id);
+        return { message: ERROR_CODES.PRODUCT_NOT_FOUND };
+      }
+
+      if (cartItem.quantity > product.stock) {
+        console.log('Quantity exceeds stock for product:', product.id);
+        return { message: ERROR_CODES.QUANTITY_EXCEEDS_STOCK };
+      }
+
+      product.stock -= cartItem.quantity;
+      await product.save({ transaction });
     }
 
-    product.stock -= cartItem.quantity;
-    await product.save({ transaction });
+    cart.status = OrderStatus.CONFIRMED;
+    await cart.save({ transaction });
+
+    console.log('Committing transaction...');
+    await transaction.commit();
+    return order;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
   }
-
-  cart.status = OrderStatus.CONFIRMED;
-  await cart.save({ transaction });
-
-  await transaction.commit();
-  return order;
 };
 
 const validStatusTransitions = {
@@ -196,8 +210,64 @@ const repurchaseOrder = async (orderId, address_ship, payment_method, tax, deliv
   return newOrder;
 };
 
+const updateMultipleOrdersStatus = async (orderIds, newStatus) => {
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    const orders = await db.Order.findAll({
+      where: {
+        id: orderIds,
+        order_status: OrderStatus.PENDING
+      },
+      include: [{
+        model: db.User,
+        as: 'user',
+        attributes: ['email']
+      }]
+    });
+
+    if (orders.length === 0) {
+      throw new Error(ERROR_CODES.ORDER_NOT_FOUND);
+    }
+
+    const validTransitions = validStatusTransitions[OrderStatus.PENDING];
+
+    if (!validTransitions.includes(newStatus)) {
+      throw new Error(ERROR_CODES.INVALID_STATUS_TRANSITION);
+    }
+
+    for (const order of orders) {
+      order.order_status = newStatus;
+      order.updatedAt = new Date();
+      await order.save({ transaction });
+    }
+
+    await transaction.commit();
+
+    const messages = orders.map(order => ({
+      userId: order.user_id,
+      email: order.user.email,
+      notification: {
+        title: 'Đơn hàng đã được xác nhận',
+        body: `Đơn hàng ID: ${order.id} của bạn đã được xác nhận và sẽ sớm được giao.`,
+      }
+    }));
+
+    await sendMessageToQueue('order_notifications', messages);
+
+    return orders;
+
+  } catch (error) {
+    if (transaction.finished !== 'commit') {
+      await transaction.rollback();
+    }
+    throw error;
+  }
+};
+
 export default {
   createOrder,
   updateOrderStatus,
-  repurchaseOrder
+  repurchaseOrder,
+  updateMultipleOrdersStatus
 };

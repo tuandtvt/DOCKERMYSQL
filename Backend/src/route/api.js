@@ -38,7 +38,7 @@ const initApiRoutes = (app) => {
 
     // Quản lý đơn hàng (đặt hàng, cập nhật trạng thái đơn hàng, mua lại đơn hàng)
     router.post('/api/v1/buy', authenticateToken, orderController.placeOrder);
-    router.put('/api/v1/order/update-status', authenticateToken, orderController.updateOrderStatus);
+    router.put('/api/v1/order/update-status', authenticateToken, orderController.updateOrdersStatus);
     router.post('/api/v1/orders/repurchase', authenticateToken, orderController.repurchaseOrder);
 
     // Quản lý sản phẩm (thêm sản phẩm, lấy sản phẩm của người dùng, cập nhật giá sản phẩm, danh sách sản phẩm)

@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import errorHandler from './middleware/errorHandler';
 import configCors from './config/cors';
+import { connectQueue } from './services/queueService';
 
 const app = express();
 
@@ -25,9 +26,29 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 8080;
+const PORTS = [
+  process.env.PORT0 || 8080,
+  process.env.PORT1 || 8081,
+  process.env.PORT2 || 8082,
+  process.env.PORT3 || 8083,
+  process.env.PORT4 || 8084,
+  process.env.PORT5 || 8085,
+];
 
+const startServer = async () => {
+  try {
+    await connectQueue();
+    console.log("Connected to RabbitMQ and Kafka");
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+    PORTS.forEach((PORT) => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    });
+  } catch (error) {
+    console.error("Error starting server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

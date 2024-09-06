@@ -2,9 +2,17 @@ import authService from "../services/authService";
 import { asyncHandler, sendResponse } from '../utils/CustomError';
 
 const register = asyncHandler(async (req, res) => {
+  console.log("Request body:", req.body);
   const { username, email, password, address } = req.body;
-  const result = await authService.register(username, email, password, address);
-  sendResponse(res, result);
+
+  try {
+    const result = await authService.register(username, email, password, address);
+    console.log("Register result:", result);
+    sendResponse(res, result);
+  } catch (error) {
+    console.error("Error in authController register:", error);
+    sendResponse(res, { message: "Internal Server Error" }, 500);
+  }
 });
 
 const verifyAccount = asyncHandler(async (req, res) => {
