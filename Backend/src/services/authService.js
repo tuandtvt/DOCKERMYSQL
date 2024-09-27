@@ -109,7 +109,7 @@ const forgotPassword = async (email) => {
   await emailService.sendEmail(
     email,
     'Lấy lại mật khẩu',
-    `Xin chào,\n\nĐể lấy lại mật khẩu, bạn vui lòng nhấn vào link: ${process.env.REACT_URL}/api/v1/reset-password/${token}\n\nTrân trọng,\nTuấn`
+    `Xin chào,\n\nĐể lấy lại mật khẩu, bạn vui lòng nhấn vào link: ${process.env.REACT_URL}/api/v1/reset-password/${token}\n\nThanks,\nTuấn`
   );
 
   return { message: 'Password reset email sent successfully.' };
