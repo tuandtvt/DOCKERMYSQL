@@ -7,6 +7,8 @@ import ERROR_CODES from '../errorCodes';
 const generateToken = (payload, expiresIn = '1d') =>
   jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 
+const generateToken1 = (payload, expiresIn = '1d') =>
+  jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 
 const register = async (username, email, password, address) => {
   console.log("Registering user:", username, email);
