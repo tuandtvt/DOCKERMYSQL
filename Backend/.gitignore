@@ -1,0 +1,9 @@
+/node_modules
+/vendor
+/.idea
+.idea/
+.env
+
+firebaseAdmin.js
+
+serviceAccountKey.json
