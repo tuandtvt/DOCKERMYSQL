@@ -9,6 +9,7 @@ const generateToken = (payload, expiresIn = '1d') =>
 
 aaaaaaaaaa
 aaaaaaaa
+bbbbbbbbbb
 
 const register = async (username, email, password, address) => {
   console.log("Registering user:", username, email);
